@@ -1,1 +1,1 @@
-from .midi import Note
+from .midi import *
