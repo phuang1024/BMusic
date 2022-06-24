@@ -1,3 +1,7 @@
+__all__ = (
+    "Animator",
+)
+
 from typing import Any, Sequence, Union
 
 import bpy
@@ -23,17 +27,16 @@ class Animator:
         self.obj = obj
         self.length = length
 
-        anim = self.obj.animation_data
-        if anim is None:
-            anim_create()
-        if anim.action is None:
+        if obj.animation_data is None:
+            obj.animation_data_create()
+        if obj.animation_data.action is None:
             name = action_name if action_name is not None else f"{obj.name}.action"
-            anim.action = bpy.data.actions.new(name)
+            obj.animation_data.action = bpy.data.actions.new(name)
 
         self._fcurves = []
         for index in range(length):
-            if anim.action.fcurves.find(data_path, index=index) is None:
-                self._fcurves.append(anim.action.fcurves.new(data_path, index=index))
+            if obj.animation_data.action.fcurves.find(data_path, index=index) is None:
+                self._fcurves.append(obj.animation_data.action.fcurves.new(data_path, index=index))
 
     @property
     def data_path(self):
