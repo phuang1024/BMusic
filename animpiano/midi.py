@@ -3,6 +3,7 @@ import mido
 __all__ = (
     "Note",
     "parse_midi",
+    "notes_used",
 )
 
 
@@ -26,9 +27,11 @@ class Note:
                 f"start={self.start}, end={self.end})")
 
 
-def parse_midi(midi: mido.MidiFile, fps):
+def parse_midi(midi: mido.MidiFile, fps, offset=0):
     """
-    Returns list of Note.
+    Returns many instances of Note. First note's start is frame 0 + offset.
+
+    :param offset: Added to start and end framestamps.
     """
     notes = []
 
@@ -36,15 +39,30 @@ def parse_midi(midi: mido.MidiFile, fps):
     vels = [0] * 1000
 
     frame = 0
+    started = False
     for msg in midi:
-        frame += msg.time * fps
+        if started:
+            frame += msg.time * fps
+
         if msg.type.startswith("note_"):
+            started = True
             note = msg.note
             vel = msg.velocity if msg.type == "note_on" else 0
             if vel == 0:
-                notes.append(Note(note, vels[note], starts[note], frame))
+                n = Note(note, vels[note], starts[note]+offset, frame+offset)
+                yield n
             else:
                 starts[note] = frame
                 vels[note] = vel
 
-    return notes
+
+def notes_used(midi: mido.MidiFile):
+    """
+    Returns set of all notes used.
+    """
+    notes = []
+    for msg in midi:
+        if hasattr(msg, "note"):
+            notes.append(msg.note)
+
+    return set(notes)
