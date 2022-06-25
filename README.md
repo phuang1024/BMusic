@@ -1,3 +1,3 @@
-# Animpiano
+# BMusic
 
-Utilities for piano animation in Blender.
+Utilities for procedural music animation in Blender.

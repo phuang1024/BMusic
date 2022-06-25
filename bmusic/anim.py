@@ -42,7 +42,8 @@ class Animator:
     def data_path(self):
         return self._fcurves[0].data_path
 
-    def animate(self, frame: int, value: Union[Any, Sequence[Any]], index: int = None):
+    def animate(self, frame: int, value: Union[Any, Sequence[Any]], index: int = None,
+            handle: str = "AUTO_CLAMPED", type: str = "KEYFRAME"):
         """
         Animate either single index or all indices.
         If single index, pass in one value.
@@ -50,9 +51,11 @@ class Animator:
         """
         if index is None:
             for i in range(self.length):
-                self._anim_index(frame, value[i], i)
+                self._anim_index(frame, value[i], i, handle, type)
         else:
-            self._anim_index(frame, value, index)
+            self._anim_index(frame, value, index, handle, type)
 
-    def _anim_index(self, frame, value, index):
-        self._fcurves[index].keyframe_points.insert(frame, value)
+    def _anim_index(self, frame, value, index, handle, type):
+        key = self._fcurves[index].keyframe_points.insert(frame, value)
+        key.handle_right_type = key.handle_left_type = handle
+        key.type = type
