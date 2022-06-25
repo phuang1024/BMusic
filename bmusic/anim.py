@@ -57,5 +57,8 @@ class Animator:
 
     def _anim_index(self, frame, value, index, handle, type):
         key = self._fcurves[index].keyframe_points.insert(frame, value)
-        key.handle_right_type = key.handle_left_type = handle
+        key.handle_right_type = handle
+        key.handle_left_type = handle
         key.type = type
+
+        self._fcurves[index].update()
