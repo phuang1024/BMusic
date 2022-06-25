@@ -2,67 +2,109 @@ import mido
 
 __all__ = (
     "Note",
-    "parse_midi",
-    "notes_used",
 )
 
 
 class Note:
     """
     Note with absolute start and end time in frames.
+    Also supports linked-list like behavior within track.
     """
     note: int
     velocity: int
     start: float
     end: float
 
-    def __init__(self, note, velocity, start, end):
+    def __init__(self, note, velocity, start, end, midi: "Midi", index: int):
+        """
+        :param midi: Midi object this note belongs to.
+        :param index: Index of this note in the track. Allows for linked-list.
+        """
         self.note = note
         self.velocity = velocity
         self.start = start
         self.end = end
 
+        self.midi = midi
+        self.index = index
+
     def __repr__(self):
         return (f"animpiano.Note(note={self.note}, velocity={self.velocity}, "
                 f"start={self.start}, end={self.end})")
 
+    def diff(self, other: "Note") -> float:
+        """
+        Calculate difference in frames between this note and another's start.
+        Positive if this note starts after other.
+        """
+        return self.start - other.start
 
-def parse_midi(midi: mido.MidiFile, fps, offset=0):
+    @property
+    def next(self) -> "Note":
+        """
+        Get next note in midi.
+        """
+        ind = self.index + 1
+        if ind >= len(self.midi.notes):
+            return None
+        return self.midi.notes[ind]
+
+    @property
+    def prev(self) -> "Note":
+        """
+        Get previous note in midi.
+        """
+        ind = self.index - 1
+        if ind < 0:
+            return None
+        return self.midi.notes[ind]
+
+
+class Midi:
     """
-    Returns many instances of Note. First note's start is frame 0 + offset.
-
-    :param offset: Added to start and end framestamps.
+    Parse a midi file, combining all tracks.
     """
-    notes = []
 
-    starts = [0] * 1000
-    vels = [0] * 1000
+    def __init__(self, path: str, fps: float, offset: float = None) -> None:
+        """
+        Parse a midi file.
 
-    frame = 0
-    started = False
-    for msg in midi:
-        if started:
-            frame += msg.time * fps
+        :param path: Path to midi file.
+        :param fps: Frames per second.
+        :param offset: Offset in frames to add to all notes.
+        """
+        self.notes = []
 
-        if msg.type.startswith("note_"):
-            started = True
-            note = msg.note
-            vel = msg.velocity if msg.type == "note_on" else 0
-            if vel == 0:
-                n = Note(note, vels[note], starts[note]+offset, frame+offset)
-                yield n
-            else:
-                starts[note] = frame
-                vels[note] = vel
+        starts = [0] * 1000
+        vels = [0] * 1000
+    
+        frame = 0
+        started = False
+        for msg in midi:
+            if started:
+                frame += msg.time * fps
+    
+            if msg.type.startswith("note_"):
+                started = True
+                note = msg.note
+                vel = msg.velocity if msg.type == "note_on" else 0
+                if vel == 0:
+                    n = Note(note, vels[note], starts[note]+offset, frame+offset, self, len(self.notes))
+                    self.notes.append(n)
+                else:
+                    starts[note] = frame
+                    vels[note] = vel
 
-
-def notes_used(midi: mido.MidiFile):
-    """
-    Returns set of all notes used.
-    """
-    notes = []
-    for msg in midi:
-        if hasattr(msg, "note"):
-            notes.append(msg.note)
-
-    return set(notes)
+    @property
+    def length(self) -> float:
+        """
+        Duration, in frames, between first note's start and last note's end.
+        Does not regard offset.
+        """
+        return self.notes[-1].end - self.notes[0].start
+    
+    def notes_used(self) -> int:
+        """
+        Returns set of all notes used.
+        """
+        return set(n.note for n in self.notes)

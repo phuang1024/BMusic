@@ -11,6 +11,18 @@ class Animator:
     """
     Wrapper around Blender's animation API, providing control of keyframe type and
     handles.
+
+    Usage example:
+
+    .. code-block:: python
+
+       anim = Animator(obj, "location", length=3)
+       anim.animate(0, (0, 0, 0), handle="AUTO_CLAMPED")
+       anim.animate(60, (1, 1, 1), handle="VECTOR")
+       anim.animate(120, (2, 2, 2), type="EXTREME")
+       anim.animate(180, (3, 3, 3), handle="VECTOR", type="JITTER")
+
+       anim.animate(240, 4, index=1)   # Index 1 (Y) location
     """
 
     obj: bpy.types.Object
