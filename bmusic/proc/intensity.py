@@ -56,9 +56,18 @@ class IntensityOnOff(Intensity):
         duration = self.duration * bpy.context.scene.render.fps
         handle = "VECTOR" if self.vector_handles else "AUTO_CLAMPED"
 
-        for note in self.midi:
+        for i, note in enumerate(self.midi):
+            last = note.prev.end if note.prev else -1e9
+            next = note.next.start if note.next else 1e9
+
+            keys = []
+            if i == 0 or note.start-last > 2*duration:
+                keys.append((note.start-duration, self.min))
+            keys.append((note.start, self.max))
+            keys.append((note.end, self.min))
+            frame = min(note.end+duration, (note.end+next)/2)
+            keys.append((frame, self.min))
+
             for anim in self.animators:
-                anim.animate(note.start-duration, self.min, handle=handle)
-                anim.animate(note.start, self.max, handle=handle)
-                anim.animate(note.end, self.max, handle=handle)
-                anim.animate(note.end+duration, self.min, handle=handle)
+                for frame, value in keys:
+                    anim.animate(frame, value, handle=handle)

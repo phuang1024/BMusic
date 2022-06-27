@@ -32,7 +32,9 @@ class Animator:
             name = action_name if action_name is not None else f"{obj.name}.action"
             obj.animation_data.action = bpy.data.actions.new(name)
 
-        self._fcurve = obj.animation_data.action.fcurves.new(data_path, index=index)
+        self._fcurve = obj.animation_data.action.fcurves.find(data_path, index=index)
+        if self._fcurve is None:
+            self._fcurve = obj.animation_data.action.fcurves.new(data_path, index=index)
 
     @property
     def data_path(self):
