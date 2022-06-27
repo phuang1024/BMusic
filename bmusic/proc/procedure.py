@@ -10,6 +10,11 @@ class Procedure:
 
     Extend from this class to create your animator. Subclasses inherit
     available parameters from the parent class.
+
+    Parameters
+    ----------
+
+    midi: Midi object.
     """
 
     params: Mapping[str, Any]
@@ -21,11 +26,6 @@ class Procedure:
         In the subclass, you may override this method, using more parameters.
         Subclasses inherit available parameters from the parent class.
         However, always call super().__init__() to initialize the parent class.
-
-        Parameters
-        ----------
-
-        midi: Midi object.
         """
         self.midi = kwargs.get("midi")
 
