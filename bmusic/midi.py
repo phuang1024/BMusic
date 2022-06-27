@@ -114,7 +114,7 @@ class Midi:
         Create a midi from a list of notes.
         """
         midi = Midi(None, None)
-        midi.notes = list(notes)
+        midi.notes = [Note(n.note, n.velocity, n.start, n.end, midi, i) for i, n in enumerate(notes)]
         return midi
 
     @property

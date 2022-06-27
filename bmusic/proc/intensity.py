@@ -64,7 +64,7 @@ class IntensityOnOff(Intensity):
             if i == 0 or note.start-last > 2*duration:
                 keys.append((note.start-duration, self.min))
             keys.append((note.start, self.max))
-            keys.append((note.end, self.min))
+            keys.append((note.end, self.max))
             frame = min(note.end+duration, (note.end+next)/2)
             keys.append((frame, self.min))
 
