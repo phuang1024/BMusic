@@ -1,9 +1,21 @@
+"""
+Procedures relating to intensity of something e.g. light, piano key's rotation,
+string's vibration, etc.
+"""
+
+__all__ = (
+    "Intensity",
+    "IntensityOnOff",
+)
+
+import bpy
+
 from .procedure import Procedure
 
 
 class Intensity(Procedure):
     """
-    Animates intensity of something, e.g. glow of a string.
+    Base intensity class.
 
     Parameters
     ----------
@@ -22,5 +34,31 @@ class Intensity(Procedure):
         self.min = kwargs.get("min", 0)
         self.max = kwargs.get("max", 1)
 
+
+class IntensityOnOff(Intensity):
+    """
+    Turns on when a note starts and off when it ends.
+
+    Parameters
+    ----------
+
+    duration: Time, in seconds, to spend interpolating from states.
+
+    vector_handles: Whether to use vector handles (no easing in or out).
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.duration = kwargs.get("duration", 0.1)
+        self.vector_handles = kwargs.get("vector_handles", False)
+
     def animate(self):
-        self.animators[0].animate(0, 0)  # TODO test
+        duration = self.duration * bpy.context.scene.render.fps
+        handle = "VECTOR" if self.vector_handles else "AUTO_CLAMPED"
+
+        for note in self.midi:
+            for anim in self.animators:
+                anim.animate(note.start-duration, self.min, handle=handle)
+                anim.animate(note.start, self.max, handle=handle)
+                anim.animate(note.end, self.max, handle=handle)
+                anim.animate(note.end+duration, self.min, handle=handle)

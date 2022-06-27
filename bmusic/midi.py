@@ -1,7 +1,11 @@
+from typing import List, Sequence
+
+import bpy
 import mido
 
 __all__ = (
     "Note",
+    "Midi",
 )
 
 
@@ -65,7 +69,7 @@ class Midi:
     Parse a midi file, combining all tracks.
     """
 
-    def __init__(self, path: str, fps: float, offset: float = None) -> None:
+    def __init__(self, path: str = None, offset: float = 0) -> None:
         """
         Parse a midi file.
 
@@ -75,9 +79,15 @@ class Midi:
         """
         self.notes = []
 
+        if path is None:
+            return
+
+        fps = bpy.context.scene.render.fps
+        midi = mido.MidiFile(path)
+
         starts = [0] * 1000
         vels = [0] * 1000
-    
+
         frame = 0
         started = False
         for msg in midi:
@@ -95,6 +105,18 @@ class Midi:
                     starts[note] = frame
                     vels[note] = vel
 
+    def __iter__(self):
+        return iter(self.notes)
+
+    @classmethod
+    def from_notes(cls, notes: Sequence[Note]) -> "Midi":
+        """
+        Create a midi from a list of notes.
+        """
+        midi = Midi(None, None)
+        midi.notes = list(notes)
+        return midi
+
     @property
     def length(self) -> float:
         """
@@ -108,3 +130,9 @@ class Midi:
         Returns set of all notes used.
         """
         return set(n.note for n in self.notes)
+
+    def filter_notes(self, good: Sequence[int]) -> "Midi":
+        """
+        Filter notes to only those in good.
+        """
+        return Midi.from_notes(n for n in self.notes if n.note in good)
