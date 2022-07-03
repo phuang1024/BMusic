@@ -62,8 +62,8 @@ class IntensityOnOff(Intensity):
         handle = "VECTOR" if self.vector_handles else "AUTO_CLAMPED"
 
         for i, note in enumerate(self.midi):
-            last = note.prev.end if note.prev else -1e9
-            next = note.next.start if note.next else 1e9
+            last = note.prev_end
+            next = note.next_start
 
             keys = []
 
@@ -122,8 +122,8 @@ class IntensityFade(Intensity):
         last_ended = True
 
         for i, note in enumerate(self.midi):
-            last = note.prev.end if note.prev else -1e9
-            next = note.next.start if note.next else 1e9
+            last = note.prev_end
+            next = note.next_start
             long_pause = next > note.end + 3   # Long between this end and next start
             end_frame = min(note.end, next)
 

@@ -54,6 +54,14 @@ class Note:
         return self.midi.notes[ind]
 
     @property
+    def next_start(self) -> float:
+        """
+        Timestamp of next note's start.
+        1e9 if no next note.
+        """
+        return self.next.start if self.next else 1e9
+
+    @property
     def prev(self) -> "Note":
         """
         Get previous note in midi.
@@ -62,6 +70,14 @@ class Note:
         if ind < 0:
             return None
         return self.midi.notes[ind]
+
+    @property
+    def prev_end(self) -> float:
+        """
+        Timestamp of previous note's end.
+        -1e9 if no previous note.
+        """
+        return self.prev.end if self.prev else -1e9
 
 
 class Midi:
