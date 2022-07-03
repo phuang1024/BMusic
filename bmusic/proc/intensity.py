@@ -20,19 +20,14 @@ class Intensity(Procedure):
     Parameters
     ----------
 
-    animators: List of Animator objects corresponding to properties
-        to animate.
-
-    min: Minimum intensity for all animators.
-
-    max: Maximum intensity for all animators.
+    animkey: Animation key with following keys:
+        - basis: Resting (intensity 0) position.
+        - on: Playing (intensity 1) position.
     """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.animators = kwargs.get("animators", [])
-        self.min = kwargs.get("min", 0)
-        self.max = kwargs.get("max", 1)
+        self.animkey = kwargs.get("animkey")
 
 
 class IntensityOnOff(Intensity):
@@ -61,13 +56,18 @@ class IntensityOnOff(Intensity):
             next = note.next.start if note.next else 1e9
 
             keys = []
-            if i == 0 or note.start-last > 2*duration:
-                keys.append((note.start-duration, self.min))
-            keys.append((note.start, self.max))
-            keys.append((note.end, self.max))
-            frame = min(note.end+duration, (note.end+next)/2)
-            keys.append((frame, self.min))
 
-            for anim in self.animators:
-                for frame, value in keys:
-                    anim.animate(frame, value, handle=handle)
+            # Initial resting position
+            if i == 0 or note.start-last > 2*duration:
+                keys.append((note.start-duration, self.min, "JITTER"))
+
+            # Playing through note
+            keys.append((note.start, self.max, "MOVING_HOLD"))
+            keys.append((note.end, self.max, "MOVING_HOLD"))
+
+            # Resting after note (sooner if next note close).
+            frame = min(note.end+duration, (note.end+next)/2)
+            keys.append((frame, self.min, "JITTER"))
+
+            for frame, value, type in keys:
+                self.animkey.animate(frame, handle=handle, type=type, on=value)
