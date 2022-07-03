@@ -38,8 +38,10 @@ class IntensityOnOff(Intensity):
     ----------
 
     duration: Time, in seconds, to spend interpolating from states.
+        Default: 0.1
 
     vector_handles: Whether to use vector handles (no easing in or out).
+        Default: False
     """
 
     def __init__(self, **kwargs):
@@ -59,15 +61,15 @@ class IntensityOnOff(Intensity):
 
             # Initial resting position
             if i == 0 or note.start-last > 2*duration:
-                keys.append((note.start-duration, self.min, "JITTER"))
+                keys.append((note.start-duration, 0, "JITTER"))
 
             # Playing through note
-            keys.append((note.start, self.max, "MOVING_HOLD"))
-            keys.append((note.end, self.max, "MOVING_HOLD"))
+            keys.append((note.start, 1, "MOVING_HOLD"))
+            keys.append((note.end, 1, "MOVING_HOLD"))
 
             # Resting after note (sooner if next note close).
             frame = min(note.end+duration, (note.end+next)/2)
-            keys.append((frame, self.min, "JITTER"))
+            keys.append((frame, 0, "JITTER"))
 
             for frame, value, type in keys:
                 self.animkey.animate(frame, handle=handle, type=type, on=value)
