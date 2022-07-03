@@ -11,6 +11,15 @@ class Animator:
     """
     Wrapper around Blender's animation API, providing control of keyframe type and
     handles.
+
+    Usage example:
+
+    .. code-block:: py
+
+       anim = Animator(obj, "location", index=1)   # Y location
+       anim.animate(0, 0)
+       anim.animate(10, 10, handle="VECTOR")
+       anim.animate(20, 20, type="EXTREME")
     """
 
     obj: bpy.types.Object
@@ -38,7 +47,7 @@ class Animator:
 
     @property
     def data_path(self):
-        return self._fcurves[0].data_path
+        return self._fcurve.data_path
 
     def animate(self, frame: int, value: Any, handle: str = "AUTO_CLAMPED", type: str = "KEYFRAME"):
         """
