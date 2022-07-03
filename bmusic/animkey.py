@@ -18,6 +18,21 @@ class AnimKey:
     the basis key.
 
     Animation is done by assigning weights to each key.
+
+    Usage example:
+
+    .. code-block:: python
+
+       anim1 = bmusic.Animator(obj, "location", 0)
+       anim2 = bmusic.Animator(obj, "location", 1)
+       anim3 = bmusic.Animator(obj, "location", 2)
+
+       key = bmusic.AnimKey([anim1, anim2, anim3], [0, 0, 0])
+       key["up"] = (0, 0, 1)
+       key["cool"] = (1, 1, -1)
+       key.animate(0)
+       key.animate(30, up=2, handle="VECTOR", type="JITTER")
+       key.animate(60, up=1, cool=2, type="EXTREME")
     """
 
     _animators: List[Animator]
