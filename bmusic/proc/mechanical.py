@@ -165,7 +165,20 @@ class Scheduling(Procedure):
         # Schedule notes
         min_reward = 1e6
         for i, note in enumerate(self.midi):
-            index, reward = self.best_choice(self.midi.notes, i, status, depth=self.depth)
+            reward = []
+            for i in range(len(status)):
+                if status[i][0] is None:
+                    reward.append(1e6)
+                else:
+                    note = notes[note_i]
+                    dist = self.dist_f(note.ind, status[i][0])
+                    time = note.start - status[i][1]
+                    rew = time - dist
+                    reward.append(rew)
+
+            index = np.argmax(reward)
+            reward = max(reward)
+
             min_reward = min(min_reward, reward)
             notes[index].append(note)
             status[index][0] = note.ind
@@ -195,61 +208,6 @@ class Scheduling(Procedure):
                     self.animkeys[i].animate(f, **kwargs)
 
         return midis
-
-    def best_choice(self, notes, note_i, status, depth=1):
-        """
-        Best choice for note_i.
-
-        :param notes: List of notes.
-        :param note_i: Index of note to ponder.
-        :return: (note_ind, reward)
-        """
-        assert depth >= 1
-
-        if depth == 1 or note_i == len(notes)-1:
-            reward = []
-            for i in range(len(status)):
-                if status[i][0] is None:
-                    reward.append(1e6)
-                else:
-                    note = notes[note_i]
-                    rew = self.compute_reward(status, note, i)
-                    reward.append(rew)
-    
-            best_i = np.argmax(reward)
-            best_rew = max(reward)
-    
-            return best_i, best_rew
-
-        else:
-            reward = []
-            for i in range(len(status)):
-                note = notes[note_i]
-
-                if status[i][0] is None:
-                    depth1_rew = 1e6
-                else:
-                    depth1_rew = self.compute_reward(status, note, i)
-
-                new_status = deepcopy(status)
-                new_status[i][0] = note.ind
-                new_status[i][1] = note.start
-
-                index, rew = self.best_choice(notes, note_i+1, new_status, depth-1)
-                reward.append(depth1_rew + rew * self.reward_decay)
-
-            best_i = np.argmax(reward)
-            best_rew = max(reward)
-
-            return best_i, best_rew
-
-    def compute_reward(self, status, note, hammer_i):
-        """
-        Compute reward for a choice.
-        """
-        dist = self.dist_f(note.ind, status[hammer_i][0])
-        time = note.start - status[hammer_i][1]
-        return time - dist
 
     @staticmethod
     def DIST_LINEAR(x, y):

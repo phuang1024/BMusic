@@ -44,6 +44,13 @@ class Note:
         return self.start - other.start
 
     @property
+    def ind(self) -> int:
+        """
+        Index of self.note in self.midi.
+        """
+        return self.midi.notes_used.index(self.note)
+
+    @property
     def next(self) -> "Note":
         """
         Get next note in midi.
@@ -70,6 +77,14 @@ class Note:
         if ind < 0:
             return None
         return self.midi.notes[ind]
+
+    @property
+    def prev_start(self) -> float:
+        """
+        Timestamp of previous note's start.
+        -1e9 if no previous note.
+        """
+        return self.prev.start if self.prev else -1e9
 
     @property
     def prev_end(self) -> float:
@@ -121,8 +136,13 @@ class Midi:
                     starts[note] = frame
                     vels[note] = vel
 
+        self._init()
+
     def __iter__(self):
         return iter(self.notes)
+
+    def __len__(self):
+        return len(self.notes)
 
     @classmethod
     def from_notes(cls, notes: Sequence[Note]) -> "Midi":
@@ -131,6 +151,7 @@ class Midi:
         """
         midi = Midi(None, None)
         midi.notes = [Note(n.note, n.velocity, n.start, n.end, midi, i) for i, n in enumerate(notes)]
+        midi._init()
         return midi
 
     @property
@@ -141,14 +162,14 @@ class Midi:
         """
         return self.notes[-1].end - self.notes[0].start
     
-    def notes_used(self) -> int:
-        """
-        Returns set of all notes used.
-        """
-        return set(n.note for n in self.notes)
-
     def filter_notes(self, good: Sequence[int]) -> "Midi":
         """
         Filter notes to only those in good.
         """
         return Midi.from_notes(n for n in self.notes if n.note in good)
+
+    def _init(self):
+        """
+        More initializing.
+        """
+        self.notes_used = sorted(set(n.note for n in self.notes))
