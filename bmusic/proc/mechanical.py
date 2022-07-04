@@ -4,11 +4,15 @@ Mechanical movements e.g. hammer, robot arm, etc.
 
 __all__ = (
     "Hammer",
+    "Scheduling",
 )
+
+from copy import deepcopy
 
 import bpy
 import numpy as np
 
+from ..midi import Midi
 from .procedure import Procedure
 
 
@@ -31,10 +35,10 @@ class Hammer(Procedure):
         - recoil: Bounce back after hit.
 
     prepare_dur: Duration (sec) of rest to prepare.
-        Default: 0.18
+        Default: 0.15
 
     hit_dur: Duration (sec) of prepare to hit movement.
-        Default: 0.1
+        Default: 0.08
 
     recoil_dur: Duration (sec) of hit to recoil movement.
         Default: 0.13
@@ -52,8 +56,8 @@ class Hammer(Procedure):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.animkey = kwargs.get("animkey")
-        self.prepare_dur = kwargs.get("prepare_dur", 0.18)
-        self.hit_dur = kwargs.get("hit_dur", 0.1)
+        self.prepare_dur = kwargs.get("prepare_dur", 0.15)
+        self.hit_dur = kwargs.get("hit_dur", 0.08)
         self.recoil_dur = kwargs.get("recoil_dur", 0.13)
         self.wobble_period = kwargs.get("wobble_period", 0.35)
         self.wobble_count = kwargs.get("wobble_count", 4)
@@ -74,7 +78,7 @@ class Hammer(Procedure):
         total_dur = before_dur + after_dur
 
         for i, note in enumerate(self.midi):
-            last = note.prev.start if note.prev else -1e9
+            last = note.prev_start
             next = note.next_start
 
             hit_intensity = np.interp(note.velocity, [0, 127], [0, 1])
@@ -108,3 +112,149 @@ class Hammer(Procedure):
             if next - before_dur > note.start + offset:
                 # Long time until, so reset to resting position.
                 self.animkey.animate(note.start+offset, type="JITTER")
+
+
+class Scheduling(Procedure):
+    """
+    Schedule limited number of objects to switch between more notes to play.
+    This procedure only moves the objects, but does not play the notes.
+    You may want to combine it with something else e.g. Hammer.
+
+    Parameters
+    ----------
+
+    animkeys: List of animation keys, each corresponding to a hammer.
+        - move0, move1, move2, ...: Move to note index i.
+
+    distance: Function to get distance between two notes.
+        Inputs: (note1_ind, note2_ind)
+        Output: distance
+        Default: Scheduling.DIST_LINEAR
+        Presets: DIST_LINEAR, DIST_SQUARE
+
+    idle_time: Time (sec) of pause before moving on to next note.
+        Default 0.1
+
+    depth: Depth of search.
+        Default: 3
+
+    reward_decay: Decay factor of reward per depth.
+        Default: 0.3
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.animkeys = kwargs.get("animkeys")
+        self.idle_time = kwargs.get("idle_time", 0.1)
+        self.dist_f = kwargs.get("distance", Scheduling.DIST_LINEAR)
+        self.depth = kwargs.get("depth", 3)
+        self.reward_decay = kwargs.get("reward_decay", 0.3)
+
+    def animate(self):
+        """
+        :return: A list. Each element is a Midi obj for the corresponding
+            hammer to play.
+        """
+        idle_time = self.idle_time * bpy.context.scene.render.fps / 2
+        notes_used = self.midi.notes_used
+
+        # (note_ind, last_play_time)
+        status = [[None, -1] for _ in self.animkeys]
+        notes = [[] for _ in self.animkeys]
+
+        # Schedule notes
+        min_reward = 1e6
+        for i, note in enumerate(self.midi):
+            index, reward = self.best_choice(self.midi.notes, i, status, depth=self.depth)
+            min_reward = min(min_reward, reward)
+            notes[index].append(note)
+            status[index][0] = note.ind
+            status[index][1] = note.start
+
+        print(f"BMusic: Scheduling: min_reward={min_reward}")
+
+        # Animate motion
+        midis = list(map(Midi.from_notes, notes))
+        for i, mid in enumerate(midis):
+            for note in mid:
+                prev = note.prev_start
+                next = note.next_start
+                frames = [note.start]
+
+                thres = idle_time * 2.5   # Don't want too jarring.
+                if note.start-prev > thres:
+                    frames.append(note.start-idle_time)
+                if next-note.start > thres:
+                    frames.append(note.start+idle_time)
+
+                # Midi changed so can't use note.ind
+                ind = notes_used.index(note.note)
+                name = f"move{ind}"
+                kwargs = {name: 1}
+                for f in frames:
+                    self.animkeys[i].animate(f, **kwargs)
+
+        return midis
+
+    def best_choice(self, notes, note_i, status, depth=1):
+        """
+        Best choice for note_i.
+
+        :param notes: List of notes.
+        :param note_i: Index of note to ponder.
+        :return: (note_ind, reward)
+        """
+        assert depth >= 1
+
+        if depth == 1 or note_i == len(notes)-1:
+            reward = []
+            for i in range(len(status)):
+                if status[i][0] is None:
+                    reward.append(1e6)
+                else:
+                    note = notes[note_i]
+                    rew = self.compute_reward(status, note, i)
+                    reward.append(rew)
+    
+            best_i = np.argmax(reward)
+            best_rew = max(reward)
+    
+            return best_i, best_rew
+
+        else:
+            reward = []
+            for i in range(len(status)):
+                note = notes[note_i]
+
+                if status[i][0] is None:
+                    depth1_rew = 1e6
+                else:
+                    depth1_rew = self.compute_reward(status, note, i)
+
+                new_status = deepcopy(status)
+                new_status[i][0] = note.ind
+                new_status[i][1] = note.start
+
+                index, rew = self.best_choice(notes, note_i+1, new_status, depth-1)
+                reward.append(depth1_rew + rew * self.reward_decay)
+
+            best_i = np.argmax(reward)
+            best_rew = max(reward)
+
+            return best_i, best_rew
+
+    def compute_reward(self, status, note, hammer_i):
+        """
+        Compute reward for a choice.
+        """
+        dist = self.dist_f(note.ind, status[hammer_i][0])
+        time = note.start - status[hammer_i][1]
+        return time - dist
+
+    @staticmethod
+    def DIST_LINEAR(x, y):
+        return abs(x-y)
+
+    @staticmethod
+    def DIST_SQUARE(x, y):
+        return (x-y) ** 2
