@@ -168,20 +168,10 @@ class Scheduling(Procedure):
                 if status[i][0] is None:
                     reward.append(1e6)
                 else:
-                    left = status[i-1][0] if i > 0 else -1e6
-                    right = status[i+1][0] if i < len(status)-1 else 1e6
-                    if left is None:
-                        left = -1e6
-                    if right is None:
-                        right = 1e6
-
-                    if self.no_overlap and not (left < note.ind < right):
-                        reward.append(-1e6)
-                    else:
-                        dist = self.dist_f(note.ind, status[i][0])
-                        time = note.start - status[i][1]
-                        rew = time - dist
-                        reward.append(rew)
+                    dist = self.dist_f(note.ind, status[i][0])
+                    time = note.start - status[i][1]
+                    rew = time - dist
+                    reward.append(rew)
 
             index = np.argmax(reward)
             reward = max(reward)
