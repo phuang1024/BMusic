@@ -135,18 +135,16 @@ class Scheduling(Procedure):
     idle_time: Time (sec) of pause before moving on to next note.
         Default 0.1
 
-    no_overlap: Whether to disallow hammers overlapping (moving across).
-        Default: False
+    depth: Depth of search.
+        Default: 3
     """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.animkeys = kwargs.get("animkeys")
-        self.idle_time = kwargs.get("idle_time", 0.1)
         self.dist_f = kwargs.get("distance", Scheduling.DIST_LINEAR)
+        self.idle_time = kwargs.get("idle_time", 0.1)
         self.depth = kwargs.get("depth", 3)
-        self.reward_decay = kwargs.get("reward_decay", 0.3)
-        self.no_overlap = kwargs.get("no_overlap", False)
 
     def animate(self):
         """
@@ -158,35 +156,24 @@ class Scheduling(Procedure):
 
         # (note_ind, last_play_time)
         status = [[None, -1] for _ in self.animkeys]
-        notes = [[] for _ in self.animkeys]
+        schedule = [[] for _ in self.animkeys]
 
         # Schedule notes
-        min_reward = 1e6
-        for note in self.midi:
-            reward = []
-            for i in range(len(status)):
-                if status[i][0] is None:
-                    reward.append(1e6)
-                else:
-                    dist = self.dist_f(note.ind, status[i][0])
-                    time = note.start - status[i][1]
-                    rew = time - dist
-                    reward.append(rew)
-
-            index = np.argmax(reward)
-            reward = max(reward)
-            if reward < -1e5:
-                raise ValueError("No note can be scheduled with no overlap.")
+        print("BMusic: Scheduling: Scheduling notes...")
+        min_reward = float("inf")
+        for i, note in enumerate(self.midi):
+            index, reward = self.best_choice(self.midi.notes, i, status, depth=self.depth)
 
             min_reward = min(min_reward, reward)
-            notes[index].append(note)
+            schedule[index].append(note)
             status[index][0] = note.ind
             status[index][1] = note.start
 
         print(f"BMusic: Scheduling: min_reward={min_reward}")
 
         # Animate motion
-        midis = list(map(Midi.from_notes, notes))
+        print("BMusic: Scheduling: Animate motion...")
+        midis = list(map(Midi.from_notes, schedule))
         for i, mid in enumerate(midis):
             for note in mid:
                 prev = note.prev_start
@@ -207,6 +194,42 @@ class Scheduling(Procedure):
                     self.animkeys[i].animate(f, **kwargs)
 
         return midis
+
+    def best_choice(self, notes, note_i, status, depth=1):
+        """
+        Compute which hammer to choose.
+
+        :return: (hammer_i, reward)
+        """
+        assert depth >= 1
+
+        count = len(status)
+        note = notes[note_i]
+
+        reward = []
+        for i in range(count):
+            if status[i][0] is None:
+                reward.append(1e6)
+            else:
+                rew = 0
+                dist = self.dist_f(note.ind, status[i][0])
+                time = note.start - status[i][1]
+                rew += time - dist
+
+                if depth > 1 and note_i < len(notes)-1:
+                    new_status = deepcopy(status)
+                    new_status[i][0] = note.ind
+                    new_status[i][1] = note.start
+                    _, depth_rew = self.best_choice(notes, note_i+1, new_status, depth-1)
+
+                    rew += depth_rew * 0.9
+
+                reward.append(rew)
+
+        index = np.argmax(reward)
+        reward = max(reward)
+
+        return index, reward
 
     @staticmethod
     def DIST_LINEAR(x, y):
