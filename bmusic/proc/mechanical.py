@@ -135,11 +135,8 @@ class Scheduling(Procedure):
     idle_time: Time (sec) of pause before moving on to next note.
         Default 0.1
 
-    depth: Depth of search.
-        Default: 3
-
-    reward_decay: Decay factor of reward per depth.
-        Default: 0.3
+    no_overlap: Whether to disallow hammers overlapping (moving across).
+        Default: False
     """
 
     def __init__(self, **kwargs):
@@ -149,6 +146,7 @@ class Scheduling(Procedure):
         self.dist_f = kwargs.get("distance", Scheduling.DIST_LINEAR)
         self.depth = kwargs.get("depth", 3)
         self.reward_decay = kwargs.get("reward_decay", 0.3)
+        self.no_overlap = kwargs.get("no_overlap", False)
 
     def animate(self):
         """
@@ -164,20 +162,31 @@ class Scheduling(Procedure):
 
         # Schedule notes
         min_reward = 1e6
-        for i, note in enumerate(self.midi):
+        for note in self.midi:
             reward = []
             for i in range(len(status)):
                 if status[i][0] is None:
                     reward.append(1e6)
                 else:
-                    note = notes[note_i]
-                    dist = self.dist_f(note.ind, status[i][0])
-                    time = note.start - status[i][1]
-                    rew = time - dist
-                    reward.append(rew)
+                    left = status[i-1][0] if i > 0 else -1e6
+                    right = status[i+1][0] if i < len(status)-1 else 1e6
+                    if left is None:
+                        left = -1e6
+                    if right is None:
+                        right = 1e6
+
+                    if self.no_overlap and not (left < note.ind < right):
+                        reward.append(-1e6)
+                    else:
+                        dist = self.dist_f(note.ind, status[i][0])
+                        time = note.start - status[i][1]
+                        rew = time - dist
+                        reward.append(rew)
 
             index = np.argmax(reward)
             reward = max(reward)
+            if reward < -1e5:
+                raise ValueError("No note can be scheduled with no overlap.")
 
             min_reward = min(min_reward, reward)
             notes[index].append(note)
