@@ -146,7 +146,8 @@ class Scheduling(Procedure):
         :return: A list. Each element is a Midi obj for the corresponding
             hammer to play.
         """
-        idle_time = self.idle_time * bpy.context.scene.render.fps / 2
+        self.fps = bpy.context.scene.render.fps  # For performance
+        idle_time = self.idle_time * self.fps / 2
         notes_used = self.midi.notes_used
 
         # (note_ind, last_play_time)
@@ -158,6 +159,7 @@ class Scheduling(Procedure):
         min_reward = float("inf")
         for i, note in tqdm(enumerate(self.midi), total=len(self.midi.notes)):
             index, reward = self.best_choice(self.midi.notes, i, status, depth=self.depth)
+            print(note.note, note.start, index, reward)
 
             min_reward = min(min_reward, reward)
             schedule[index].append(note)
@@ -185,8 +187,7 @@ class Scheduling(Procedure):
 
                 # Midi changed so can't use note.ind
                 ind = notes_used.index(note.note)
-                name = f"move{ind}"
-                kwargs = {name: 1}
+                kwargs = {f"move{ind}": 1}
                 for f in frames:
                     self.animkeys[i].animate(f, **kwargs)
 
@@ -214,10 +215,10 @@ class Scheduling(Procedure):
                 continue
 
             dist = abs(note.ind - status[i][0])
-            time = abs(note.start - status[i][1])
+            time = abs(note.start - status[i][1]) / self.fps
 
-            dist = max(dist, 0.7)   # Divide by zero protection
-            rew = tanh(time / dist ** 2)
+            dist = max(dist, 0.1)   # Divide by zero protection
+            rew = tanh(30 * time / dist)
 
             if depth > 1 and note_i < len(notes)-1:
                 new_status = deepcopy(status)
@@ -225,6 +226,8 @@ class Scheduling(Procedure):
                 new_status[i][1] = note.start
                 _, depth_rew = self.best_choice(notes, note_i+1, new_status, depth-1)
 
+                if depth == 4 and notes[note_i].note == 44:
+                    print("in", i, dist, time, rew, depth_rew)
                 rew += depth_rew
 
             reward.append(rew)
