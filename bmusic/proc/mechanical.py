@@ -8,9 +8,11 @@ __all__ = (
 )
 
 from copy import deepcopy
+from math import tanh
 
 import bpy
 import numpy as np
+from tqdm import tqdm
 
 from ..midi import Midi
 from .procedure import Procedure
@@ -126,12 +128,6 @@ class Scheduling(Procedure):
     animkeys: List of animation keys, each corresponding to a hammer.
         - move0, move1, move2, ...: Move to note index i.
 
-    distance: Function to get distance between two notes.
-        Inputs: (note1_ind, note2_ind)
-        Output: distance
-        Default: Scheduling.DIST_LINEAR
-        Presets: DIST_LINEAR, DIST_SQUARE
-
     idle_time: Time (sec) of pause before moving on to next note.
         Default 0.1
 
@@ -142,7 +138,6 @@ class Scheduling(Procedure):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.animkeys = kwargs.get("animkeys")
-        self.dist_f = kwargs.get("distance", Scheduling.DIST_LINEAR)
         self.idle_time = kwargs.get("idle_time", 0.1)
         self.depth = kwargs.get("depth", 3)
 
@@ -161,7 +156,7 @@ class Scheduling(Procedure):
         # Schedule notes
         print("BMusic: Scheduling: Scheduling notes...")
         min_reward = float("inf")
-        for i, note in enumerate(self.midi):
+        for i, note in tqdm(enumerate(self.midi), total=len(self.midi.notes)):
             index, reward = self.best_choice(self.midi.notes, i, status, depth=self.depth)
 
             min_reward = min(min_reward, reward)
@@ -180,11 +175,13 @@ class Scheduling(Procedure):
                 next = note.next_start
                 frames = [note.start]
 
+                """
                 thres = idle_time * 2.5   # Don't want too jarring.
                 if note.start-prev > thres:
                     frames.append(note.start-idle_time)
                 if next-note.start > thres:
                     frames.append(note.start+idle_time)
+                """
 
                 # Midi changed so can't use note.ind
                 ind = notes_used.index(note.note)
@@ -206,35 +203,33 @@ class Scheduling(Procedure):
         count = len(status)
         note = notes[note_i]
 
+        some_not_played = None in [s[0] for s in status]
+
         reward = []
         for i in range(count):
-            if status[i][0] is None:
-                reward.append(1e6)
-            else:
-                rew = 0
-                dist = self.dist_f(note.ind, status[i][0])
-                time = note.start - status[i][1]
-                rew += time - dist
-
-                if depth > 1 and note_i < len(notes)-1:
-                    new_status = deepcopy(status)
-                    new_status[i][0] = note.ind
-                    new_status[i][1] = note.start
-                    _, depth_rew = self.best_choice(notes, note_i+1, new_status, depth-1)
-
-                    rew += depth_rew * 0.9
-
+            if some_not_played:
+                # First make sure each hammer plays
+                rew = 1e6 if status[i][0] is None else 0
                 reward.append(rew)
+                continue
+
+            dist = abs(note.ind - status[i][0])
+            time = abs(note.start - status[i][1])
+
+            dist = max(dist, 0.7)   # Divide by zero protection
+            rew = tanh(time / dist ** 2)
+
+            if depth > 1 and note_i < len(notes)-1:
+                new_status = deepcopy(status)
+                new_status[i][0] = note.ind
+                new_status[i][1] = note.start
+                _, depth_rew = self.best_choice(notes, note_i+1, new_status, depth-1)
+
+                rew += depth_rew
+
+            reward.append(rew)
 
         index = np.argmax(reward)
         reward = max(reward)
 
         return index, reward
-
-    @staticmethod
-    def DIST_LINEAR(x, y):
-        return abs(x-y)
-
-    @staticmethod
-    def DIST_SQUARE(x, y):
-        return (x-y) ** 2
