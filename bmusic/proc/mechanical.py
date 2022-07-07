@@ -225,8 +225,6 @@ class Scheduling(Procedure):
                 new_status[i][1] = note.start
                 _, depth_rew = self.best_choice(notes, note_i+1, new_status, depth-1)
 
-                if depth == 4 and notes[note_i].note == 44:
-                    print("in", i, dist, time, rew, depth_rew)
                 rew += depth_rew
 
             reward.append(rew)
