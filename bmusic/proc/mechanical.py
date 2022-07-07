@@ -159,7 +159,6 @@ class Scheduling(Procedure):
         min_reward = float("inf")
         for i, note in tqdm(enumerate(self.midi), total=len(self.midi.notes)):
             index, reward = self.best_choice(self.midi.notes, i, status, depth=self.depth)
-            print(note.note, note.start, index, reward)
 
             min_reward = min(min_reward, reward)
             schedule[index].append(note)
