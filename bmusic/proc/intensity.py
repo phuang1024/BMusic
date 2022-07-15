@@ -105,6 +105,10 @@ class IntensityFade(Intensity):
 
     off_thres: Threshold for intensity to be considered off.
         Default: 0.01
+
+    note_end: Whether to set intensity to 0 at end of note. If false, the note will
+        keep glowing until next play.
+        Default: True  (stops when note ends).
     """
 
     def __init__(self, **kwargs):
@@ -112,6 +116,7 @@ class IntensityFade(Intensity):
         self.fade_fac = kwargs.get("fade_fac", 0.3)
         self.key_interval = kwargs.get("key_interval", 10)
         self.off_thres = kwargs.get("off_thres", 0.01)
+        self.note_end = kwargs.get("note_end", True)
 
     def animate(self):
         fac = self.fade_fac ** (1.0/bpy.context.scene.render.fps)
@@ -125,7 +130,9 @@ class IntensityFade(Intensity):
             last = note.prev_end
             next = note.next_start
             long_pause = next > note.end + 3   # Long between this end and next start
-            end_frame = min(note.end, next)
+            end_frame = next - 3
+            if self.note_end:
+                end_frame = min(note.end, end_frame)
 
             intensity = np.interp(note.velocity, [0, 127], [0, 1])
 
