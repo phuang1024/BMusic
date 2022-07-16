@@ -128,6 +128,9 @@ class Scheduling(Procedure):
     animkeys: List of animation keys, each corresponding to a hammer.
         - move0, move1, move2, ...: Move to note index i.
 
+    dist_f: Function to get distance or cost between two note indexes.
+        Default: lambda i, j: abs(i-j)
+
     idle_time: Time (sec) of pause before moving on to next note.
         Default 0.1
 
@@ -138,6 +141,7 @@ class Scheduling(Procedure):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.animkeys = kwargs.get("animkeys")
+        self.dist_f = kwargs.get("dist_f", lambda i, j: abs(i-j))
         self.idle_time = kwargs.get("idle_time", 0.1)
         self.depth = kwargs.get("depth", 3)
 
@@ -163,7 +167,7 @@ class Scheduling(Procedure):
             min_reward = min(min_reward, reward)
             schedule[index].append(note)
             status[index][0] = note.ind
-            status[index][1] = note.start
+            status[index][1] = max(note.start, status[index][1])
 
         print(f"BMusic: Scheduling: min_reward={min_reward}")
 
@@ -213,10 +217,9 @@ class Scheduling(Procedure):
                 reward.append(rew)
                 continue
 
-            dist = abs(note.ind - status[i][0])
+            dist = self.dist_f(note.ind, status[i][0])
+            dist = max(dist, 0.01)   # Divide by zero protection
             time = abs(note.start - status[i][1]) / self.fps
-
-            dist = max(dist, 0.1)   # Divide by zero protection
             rew = tanh(30 * time / dist)
 
             if depth > 1 and note_i < len(notes)-1:
@@ -230,6 +233,6 @@ class Scheduling(Procedure):
             reward.append(rew)
 
         index = np.argmax(reward)
-        reward = max(reward)
+        rew = reward[index]
 
-        return index, reward
+        return index, rew
