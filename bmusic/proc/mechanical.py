@@ -94,7 +94,7 @@ class Hammer(Procedure):
             self.animkey.animate(prepare_frame, type="BREAKDOWN", prepare=hit_intensity)
 
             # Hit
-            self.animkey.animate(note.start, type="EXTREME", handle="VECTOR", hit=hit_intensity)
+            self.animkey.animate(note.start, type="EXTREME", handle="VECTOR", hit=1)
 
             # Wobble
             dur_limit = min(after_dur, next-note.start-before_dur)
@@ -103,7 +103,7 @@ class Hammer(Procedure):
             for j in range(wobble_count):
                 if offset >= dur_limit:
                     break
-                intensity = hit_intensity * wobble_decay ** (j+1)
+                intensity = wobble_decay ** (j+1)
 
                 name = "prepare" if j % 2 == 0 else "hit"
                 kwargs = {name: intensity}
