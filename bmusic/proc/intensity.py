@@ -7,6 +7,7 @@ __all__ = (
     "Intensity",
     "IntensityOnOff",
     "IntensityFade",
+    "IntensityWobble",
 )
 
 import bpy
@@ -113,7 +114,7 @@ class IntensityFade(Intensity):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.fade_fac = kwargs.get("fade_fac", 0.3)
+        self.fade_fac = kwargs.get("fade_fac", 0.6)
         self.key_interval = kwargs.get("key_interval", 10)
         self.off_thres = kwargs.get("off_thres", 0.01)
         self.note_end = kwargs.get("note_end", True)
@@ -162,5 +163,80 @@ class IntensityFade(Intensity):
                 self.animkey.animate(next_frame, type="BREAKDOWN", on=intensity)
 
                 frame = next_frame
+
+            last_ended = long_pause
+
+
+class IntensityWobble(Intensity):
+    """
+    Wobbles between 1 and -1 when hit.
+
+    Keyframe types:
+    - JITTER: Resting (intensity = 0).
+    - BREAKDOWN: Fading.
+    - EXTREME: Max intensity (frame of hit).
+
+    Parameters
+    ----------
+
+    fade_fac: Exponential decay factor in factor/wobble.
+        Default 0.7
+
+    period: Period of wobble in seconds.
+        Default: 1
+
+    off_thres: Threshold for intensity to be considered off.
+        Default: 0.01
+
+    note_end: Whether to set intensity to 0 at end of note. If false, will keep wobbling
+        until next play.
+        Default: True  (stops when note ends).
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.fade_fac = kwargs.get("fade_fac", 0.7)
+        self.period = kwargs.get("period", 1)
+        self.off_thres = kwargs.get("off_thres", 0.01)
+        self.note_end = kwargs.get("note_end", True)
+
+    def animate(self):
+        period = self.period * bpy.context.scene.render.fps
+
+        # Whether last note ended (intensity reached 0) with enough time to require
+        # another keyframe at 0 before next note.
+        last_ended = True
+
+        for i, note in enumerate(self.midi):
+            last = note.prev_end
+            next = note.next_start
+            long_pause = next > note.end + 3   # Long between this end and next start
+            end_frame = next - 3
+            if self.note_end:
+                end_frame = min(note.end, end_frame)
+
+            intensity = np.interp(note.velocity, [0, 127], [0, 1])
+
+            # Initial intensity
+            if last_ended:
+                self.animkey.animate(note.start, type="JITTER", handle="VECTOR", on=0)
+
+            # Fading
+            frame = note.start - period/2   # First wobble a little quicker.
+            i = 0
+            while True:
+                intensity *= self.fade_fac
+                next_frame = frame + period
+
+                if next_frame > end_frame:
+                    break
+                if intensity < self.off_thres:
+                    break
+
+                curr_int = intensity if i % 2 == 0 else -intensity
+                self.animkey.animate(next_frame, type="BREAKDOWN", on=curr_int)
+
+                frame = next_frame
+                i += 1
 
             last_ended = long_pause

@@ -25,7 +25,7 @@ class Animator:
     obj: bpy.types.Object
     """Blender object to animate."""
 
-    def __init__(self, obj: bpy.types.Object, data_path: str, index: int = 1,
+    def __init__(self, obj: bpy.types.Object, data_path: str, index: int = 0,
             action_name: str = None):
         """
         :param index: If a vector property, index of the component to animate, e.g. index 1 for Y location.
