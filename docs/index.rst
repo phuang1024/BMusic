@@ -3,8 +3,15 @@ BMusic
 
 .. toctree::
    :caption: General
-   :maxdepth: 2
    :hidden:
 
    general/about.rst
    general/install.rst
+
+.. toctree::
+   :caption: Using BMusic
+   :hidden:
+
+   bmusic/about.rst
+   bmusic/animate.rst
+   bmusic/api.rst

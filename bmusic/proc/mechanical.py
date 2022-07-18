@@ -22,37 +22,44 @@ class Hammer(Procedure):
     """
     Hammer movement: Resting, preparing, hitting, recoil, wobbling.
 
-    Keyframe types:
-    - JITTER: Resting.
-    - BREAKDOWN: Preparing to hit.
-    - EXTREME: Hitting.
-    - KEYFRAME: Recoil and wobbling.
+    :Keyframe types:
 
-    Parameters
-    ----------
+        - JITTER: Resting.
+        - BREAKDOWN: Preparing to hit.
+        - EXTREME: Hitting.
+        - KEYFRAME: Recoil and wobbling.
 
-    animkey: Animation key:
-        - hit: Hitting.
-        - prepare: Preparing to hit.
-        - recoil: Bounce back after hit.
+    :Parameters:
 
-    prepare_dur: Duration (sec) of rest to prepare.
-        Default: 0.15
+        - animkey: Animation key:
 
-    hit_dur: Duration (sec) of prepare to hit movement.
-        Default: 0.08
+          - hit: Hitting.
+          - prepare: Preparing to hit.
+          - recoil: Bounce back after hit.
 
-    recoil_dur: Duration (sec) of hit to recoil movement.
-        Default: 0.13
+        - prepare_dur: Duration (sec) of rest to prepare.
 
-    wobble_period: Duration (sec) of each wobble.
-        Default: 0.35
+          - Default: 0.15
 
-    wobble_count: Number of wobbles to perform.
-        Default: 4
+        - hit_dur: Duration (sec) of prepare to hit movement.
 
-    wobble_decay: Factor by which wobble intensity decays each time.
-        Default: 0.5
+          - Default: 0.08
+
+        - recoil_dur: Duration (sec) of hit to recoil movement.
+
+          - Default: 0.13
+
+        - wobble_period: Duration (sec) of each wobble.
+
+          - Default: 0.35
+
+        - wobble_count: Number of wobbles to perform.
+
+          - Default: 4
+
+        - wobble_decay: Factor by which wobble intensity decays each time.
+
+          - Default: 0.5
     """
 
     def __init__(self, **kwargs):
@@ -122,20 +129,23 @@ class Scheduling(Procedure):
     This procedure only moves the objects, but does not play the notes.
     You may want to combine it with something else e.g. Hammer.
 
-    Parameters
-    ----------
+    :Parameters:
 
-    animkeys: List of animation keys, each corresponding to a hammer.
-        - move0, move1, move2, ...: Move to note index i.
+        - animkeys: List of animation keys, each corresponding to a hammer.
 
-    dist_f: Function to get distance or cost between two note indexes.
-        Default: lambda i, j: abs(i-j)
+            - move0, move1, move2, ...: Move to note index i.
 
-    idle_time: Time (sec) of pause before moving on to next note.
-        Default 0.1
+        - dist_f: Function to get distance or cost between two note indexes.
 
-    depth: Depth of search.
-        Default: 3
+            - Default: lambda i, j: abs(i-j)
+
+        - idle_time: Time (sec) of pause before moving on to next note.
+
+            - Default 0.1
+
+        - depth: Depth of search.
+
+            - Default: 3
     """
 
     def __init__(self, **kwargs):

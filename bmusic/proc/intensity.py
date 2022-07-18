@@ -22,12 +22,12 @@ class Intensity(Procedure):
 
     Max intensity is determined by note velocity.
 
-    Parameters
-    ----------
+    :Parameters:
 
-    animkey: Animation key with following keys:
-        - basis: Resting (intensity 0) position.
-        - on: Playing (intensity 1) position.
+        - animkey: Animation key with following keys:
+
+          - basis: Resting (intensity 0) position.
+          - on: Playing (intensity 1) position.
     """
 
     def __init__(self, **kwargs):
@@ -39,18 +39,20 @@ class IntensityOnOff(Intensity):
     """
     Turns on when a note starts and off when it ends.
 
-    Keyframe types:
-    - JITTER: Resting (intensity = 0).
-    - BREAKDOWN: Playing.
+    :Keyframe types:
 
-    Parameters
-    ----------
+        - JITTER: Resting (intensity = 0).
+        - BREAKDOWN: Playing.
 
-    duration: Time, in seconds, to spend interpolating from states.
-        Default: 0.1
+    :Parameters:
 
-    vector_handles: Whether to use vector handles (no easing in or out).
-        Default: False
+        - duration: Time, in seconds, to spend interpolating from states.
+
+          - Default: 0.1
+
+        - vector_handles: Whether to use vector handles (no easing in or out).
+
+          - Default: False
     """
 
     def __init__(self, **kwargs):
@@ -89,27 +91,31 @@ class IntensityFade(Intensity):
     """
     Turns on when a note starts and fades away.
 
-    Keyframe types:
-    - JITTER: Resting (intensity = 0).
-    - BREAKDOWN: Fading.
-    - EXTREME: Max intensity.
+    :Keyframe types:
 
-    Parameters
-    ----------
+        - JITTER: Resting (intensity = 0).
+        - BREAKDOWN: Fading.
+        - EXTREME: Max intensity.
 
-    fade_fac: Exponential decay factor in factor/sec.
-        Default 0.6
+    :Parameters:
 
-    key_interval: Interval in frames for decay section keyframes. Avoids keyframing
-        every frame.
-        Default: 10
+        - fade_fac: Exponential decay factor in factor/sec.
 
-    off_thres: Threshold for intensity to be considered off.
-        Default: 0.01
+          - Default 0.6
 
-    note_end: Whether to set intensity to 0 at end of note. If false, the note will
-        keep glowing until next play.
-        Default: True  (stops when note ends).
+        - key_interval: Interval in frames for decay section keyframes. Avoids keyframing
+          every frame.
+
+          - Default: 10
+
+        - off_thres: Threshold for intensity to be considered off.
+
+          - Default: 0.01
+
+        - note_end: Whether to set intensity to 0 at end of note. If false, the note will
+          keep glowing until next play.
+
+          - Default: True  (stops when note ends).
     """
 
     def __init__(self, **kwargs):
@@ -171,26 +177,30 @@ class IntensityWobble(Intensity):
     """
     Wobbles between 1 and -1 when hit.
 
-    Keyframe types:
-    - JITTER: Resting (intensity = 0).
-    - BREAKDOWN: Fading.
-    - EXTREME: Max intensity (frame of hit).
+    :Keyframe types:
 
-    Parameters
-    ----------
+        - JITTER: Resting (intensity = 0).
+        - BREAKDOWN: Fading.
+        - EXTREME: Max intensity (frame of hit).
 
-    fade_fac: Exponential decay factor in factor/wobble.
-        Default 0.7
+    :Parameters:
 
-    period: Period of wobble in seconds.
-        Default: 1
+        - fade_fac: Exponential decay factor in factor/wobble.
 
-    off_thres: Threshold for intensity to be considered off.
-        Default: 0.01
+          - Default 0.7
 
-    note_end: Whether to set intensity to 0 at end of note. If false, will keep wobbling
-        until next play.
-        Default: True  (stops when note ends).
+        - period: Period of wobble in seconds.
+
+          - Default: 1
+
+        - off_thres: Threshold for intensity to be considered off.
+
+          - Default: 0.01
+
+        - note_end: Whether to set intensity to 0 at end of note. If false, will keep wobbling
+          until next play.
+
+          - Default: True  (stops when note ends).
     """
 
     def __init__(self, **kwargs):

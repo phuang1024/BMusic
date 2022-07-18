@@ -11,10 +11,8 @@ class Procedure:
     Extend from this class to create your animator. Subclasses inherit
     available parameters from the parent class.
 
-    Parameters
-    ----------
-
-    midi: Midi object.
+    :Keyword Arguments:
+        - midi: MIDI data.
     """
 
     params: Mapping[str, Any]
