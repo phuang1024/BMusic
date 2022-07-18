@@ -3,4 +3,5 @@ version: 2
 python:
   version: 3.8
   install:
-    - fake-bpy-module-latest
+    - requirements: requirements.txt
+    - requirements: docs/requirements.txt
