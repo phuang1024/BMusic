@@ -13,6 +13,7 @@ BMusic
    :hidden:
 
    bmusic/about.rst
+   bmusic/midi.rst
    bmusic/animate.rst
    bmusic/procedure.rst
    bmusic/api.rst

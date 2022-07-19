@@ -3,6 +3,15 @@ API
 
 API documentation.
 
+MIDI
+----
+
+.. autoclass:: bmusic.Midi
+   :members:
+
+.. autoclass:: bmusic.Note
+   :members:
+
 Animation
 ---------
 
@@ -20,18 +29,24 @@ Procedures
 
 .. autoclass:: bmusic.proc.Intensity
    :members:
+   :show-inheritance:
 
 .. autoclass:: bmusic.proc.IntensityOnOff
    :members:
+   :show-inheritance:
 
 .. autoclass:: bmusic.proc.IntensityFade
    :members:
+   :show-inheritance:
 
 .. autoclass:: bmusic.proc.IntensityWobble
    :members:
+   :show-inheritance:
 
 .. autoclass:: bmusic.proc.Hammer
    :members:
+   :show-inheritance:
 
 .. autoclass:: bmusic.proc.Scheduling
    :members:
+   :show-inheritance:
