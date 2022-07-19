@@ -14,4 +14,5 @@ BMusic
 
    bmusic/about.rst
    bmusic/animate.rst
+   bmusic/procedure.rst
    bmusic/api.rst
