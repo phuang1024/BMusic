@@ -28,4 +28,8 @@ it stops.
    animkey = bmusic.AnimKey([anim], [0])
    animkey["on"] = [1]   # This key is required by the procedure (see docs).
 
-   # TODO
+   midi = bmusic.Midi("/path/to/midi.mid", offset=30)
+
+   # See docs for required parameters.
+   proc = bmusic.proc.IntensityOnOff(midi=mid, animkey=animkey)
+   proc.animate()
