@@ -24,26 +24,39 @@ We create an Animator object that operates on the object ``Cube``'s ``location[2
 We can then call the ``animate`` method to insert keyframes. The arguments are
 ``(frame, value, handle="AUTO_CLAMPED", type="KEYFRAME")``.
 
+
 AnimKey
 =======
 
-The :class:`~bmusic.AnimKey` class groups abstract positions with their respective shapes for
-animation, inspired by Blender's Shape Key feature. For example, an ``on`` position is setting
-a light's power to ``100``, or a ``hit`` position is setting a hammer's rotation to ``10``.
+The :class:`~bmusic.AnimKey` class groups abstract named positions with their respective shapes
+for animation, inspired by Blender's Shape Key feature.
+
+For example, an ``on`` position may be setting a light's power to ``100``, or a ``hit`` position
+may be setting a hammer's rotation to ``10``.
 
 AnimKeys allow us to write generalized algorithms while users are able to customize the exact motion.
 
+For example, our algorithm may contain
+
+.. code-block::
+
+   for each note:
+       animate_hit(note)
+
+What does a "hit" do? The user defines it to fit their needs. All our algorithm needs to do is
+perform a "hit".
+
 Example
 -------
-
-AnimKeys are better illustrated with an example:
 
 .. code-block:: python
 
    import bmusic
    import bpy
 
+   # Animator on X location
    anim1 = bmusic.Animator(bpy.context.object, "location", 0)
+   # Z location
    anim2 = bmusic.Animator(bpy.context.object, "location", 2)
 
    animkey = bmusic.AnimKey([anim1, anim2], [0, 0])

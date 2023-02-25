@@ -3,8 +3,8 @@ API
 
 API documentation.
 
-MIDI
-----
+``bmusic.midi``
+---------------
 
 .. autoclass:: bmusic.Midi
    :members:
@@ -12,8 +12,8 @@ MIDI
 .. autoclass:: bmusic.Note
    :members:
 
-Animation
----------
+``bmusic.anim``
+---------------
 
 .. autoclass:: bmusic.Animator
    :members:
@@ -21,8 +21,8 @@ Animation
 .. autoclass:: bmusic.AnimKey
    :members:
 
-Procedures
-----------
+``bmusic.proc``
+---------------
 
 .. autoclass:: bmusic.proc.Procedure
    :members:
