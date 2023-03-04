@@ -99,12 +99,15 @@ class IntensityFade(Intensity):
 
     :Parameters:
 
-        - fade_fac: Exponential decay factor in factor/sec.
+        - fade_func: Function that curves linear time to fade intensity.
+          Takes parameters ``(t,)`` (time in seconds since note start) and returns
+          between 0 and 1, where 0 is off and 1 is max intensity. There are a few
+          predefined functions in this class.
 
-          - Default 0.6
+          - Default EXPONENTIAL(0.6) (exponential decay at 0.6/sec)
 
-        - key_interval: Interval in frames for decay section keyframes. Avoids keyframing
-          every frame.
+        - key_interval: Interval in frames for decay section keyframes. Avoids unneccessary
+          keyframing on every frame.
 
           - Default: 10
 
@@ -112,22 +115,27 @@ class IntensityFade(Intensity):
 
           - Default: 0.01
 
-        - note_end: Whether to set intensity to 0 at end of note. If false, the note will
-          keep glowing until next play.
+        - note_end: Whether to cut intensity to 0 at end of note. If false, the note will
+          keep fading until next play, even if the note was released.
 
           - Default: True  (stops when note ends).
+
+        - use_velocity: Whether to scale intensities based on note velocity. That is, lower velocities
+          have lower peak (initial) intensity.
+        
+          - Default: True
     """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.fade_fac = kwargs.get("fade_fac", 0.6)
+        self.fade_func = kwargs.get("fade_func", self.EXPONENTIAL(0.6))
         self.key_interval = kwargs.get("key_interval", 10)
         self.off_thres = kwargs.get("off_thres", 0.01)
         self.note_end = kwargs.get("note_end", True)
+        self.use_velocity = kwargs.get("use_velocity", True)
 
     def animate(self):
-        fac = self.fade_fac ** (1.0/bpy.context.scene.render.fps)
-        interval_fac = fac ** self.key_interval
+        fps = bpy.context.scene.render.fps
 
         # Whether last note ended (intensity reached 0) with enough time to require
         # another keyframe at 0 before next note.
@@ -141,22 +149,24 @@ class IntensityFade(Intensity):
             if self.note_end:
                 end_frame = min(note.end, end_frame)
 
-            intensity = np.interp(note.velocity, [0, 127], [0, 1])
+            mult = np.interp(note.velocity, [0, 127], [0, 1])
+            if not self.use_velocity:
+                mult = 1
 
             # Initial intensity
             if last_ended:
                 self.animkey.animate(note.start-1, type="JITTER", on=0)
-            self.animkey.animate(note.start, type="EXTREME", on=intensity)
+            self.animkey.animate(note.start, type="EXTREME", on=mult*self.fade_func(0))
 
             # Fading
             frame = note.start
             while True:
-                intensity *= interval_fac
                 next_frame = frame + self.key_interval
+                intensity = self.fade_func((next_frame-note.start) / fps)
 
                 if next_frame > end_frame:
-                    final_int = intensity * fac ** (end_frame-frame)
-                    self.animkey.animate(end_frame, type="BREAKDOWN", on=final_int)
+                    final_int = self.fade_func((end_frame-frame) / fps)
+                    self.animkey.animate(end_frame, type="BREAKDOWN", on=mult*final_int)
                     if long_pause:
                         # Need to set to 0
                         self.animkey.animate(end_frame+1, type="JITTER", on=0)
@@ -166,11 +176,25 @@ class IntensityFade(Intensity):
                     self.animkey.animate(next_frame, type="JITTER", on=0)
                     break
 
-                self.animkey.animate(next_frame, type="BREAKDOWN", on=intensity)
+                self.animkey.animate(next_frame, type="BREAKDOWN", on=mult*intensity)
 
                 frame = next_frame
 
             last_ended = long_pause
+
+    @staticmethod
+    def EXPONENTIAL(fac):
+        """
+        Exponential decay with factor ``fac`` (in units per second).
+        """
+        return lambda t: np.exp(-fac*t)
+
+    @staticmethod
+    def LINEAR(fac):
+        """
+        Linear decay with factor ``fac`` (in units per second).
+        """
+        return lambda t: 1 - fac*t
 
 
 class IntensityWobble(Intensity):
