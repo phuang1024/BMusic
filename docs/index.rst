@@ -17,3 +17,9 @@ BMusic
    bmusic/animate.rst
    bmusic/procedure.rst
    bmusic/api.rst
+
+.. toctree::
+   :caption: Blog
+   :hidden:
+
+   blog/binary_bach.rst
