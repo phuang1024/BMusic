@@ -6,11 +6,16 @@ API documentation.
 ``bmusic.midi``
 ---------------
 
-.. autoclass:: bmusic.Midi
+.. autoclass:: bmusic.MessageList
    :members:
 
-.. autoclass:: bmusic.Note
+.. autoclass:: bmusic.Message
    :members:
+
+``bmusic.utils``
+----------------
+
+.. autofunction:: bmusic.message_affixes
 
 ``bmusic.anim``
 ---------------

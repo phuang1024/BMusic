@@ -75,7 +75,7 @@ class Message:
 
         :param fallback: Value to return if no next message.
         """
-        return self.next.start if self.next else fallback
+        return self.next().start if self.next() else fallback
 
     def prev(self) -> Optional["Message"]:
         """
@@ -95,7 +95,7 @@ class Message:
 
         :param fallback: Value to return if no previous message.
         """
-        return self.prev.start if self.prev else fallback
+        return self.prev().start if self.prev() else fallback
 
     def prev_end(self, fallback: float = -1e9) -> float:
         """
@@ -103,7 +103,7 @@ class Message:
 
         :param fallback: Value to return if no previous message.
         """
-        return self.prev.end if self.prev else fallback
+        return self.prev().end if self.prev() else fallback
 
 
 class MessageList:
@@ -154,13 +154,13 @@ class MessageList:
         """
         return self._messages[-1].end - self._messages[0].start
     
-    def filter_messages(self, notes: Sequence[int]) -> "MessageList":
+    def filter_notes(self, notes: Sequence[int]) -> "MessageList":
         """
         Only keep messages with note in the given list.
         """
         return MessageList([n for n in self._messages if n.note in notes])
 
-    def split_messages(self):
+    def split_notes(self):
         """
         Split into multiple tracks, each containing only one note.
         """
