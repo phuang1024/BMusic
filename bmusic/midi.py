@@ -1,138 +1,146 @@
+"""
+"note" refers to a pitch, represented as an integer in MIDI.
+For example, there are 88 notes on a piano.
+
+"message" refers to an instance of a note being played.
+For example, this MIDI file has 100 messages,
+using a total of 10 different notes.
+"""
+
 from typing import Optional, Sequence
 
 import bpy
 import mido
 
 __all__ = (
-    "Note",
-    "NoteList",
+    "Message",
+    "MessageList",
     "parse_midi"
 )
 
 
-class Note:
+class Message:
     """
-    Note with absolute start and end time in frames.
+    Message with absolute start and end time in frames.
     Also supports linked-list like behavior within track.
     """
+
     note: int
     velocity: int
     start: float
     end: float
 
-    def __init__(self, note, velocity, start, end, notelist: Optional["NoteList"] = None, index: Optional[int] = None):
+    def __init__(self, note, velocity, start, end, msglist: Optional["MessageList"] = None, index: Optional[int] = None):
         """
-        :param notelist: NoteList object this note belongs to.
-        :param index: Index of this note in the track. Allows for linked-list behavior.
+        :param msglist: MessageList object this message belongs to.
+        :param index: Index of this message in the track. Allows for linked-list behavior.
         """
         self.note = note
         self.velocity = velocity
         self.start = start
         self.end = end
 
-        self.notelist = notelist
+        self.msglist = msglist
         self.index = index
 
     def __repr__(self):
-        return (f"bmusic.Note(note={self.note}, velocity={self.velocity}, "
+        return (f"bmusic.Message(note={self.note}, velocity={self.velocity}, "
                 f"start={self.start}, end={self.end})")
 
-    def copy(self) -> "Note":
-        """
-        Copy this note.
-        """
-        return Note(self.note, self.velocity, self.start, self.end, self.notelist, self.index)
+    def copy(self) -> "Message":
+        return Message(self.note, self.velocity, self.start, self.end, self.msglist, self.index)
 
-    def diff(self, other: "Note") -> float:
+    def diff(self, other: "Message") -> float:
         """
-        Calculate difference in frames between this note and another's start.
-        Positive if this note starts after other.
+        Calculate difference in frames between this message and another's start.
+        Positive if this message starts after other.
         """
         return self.start - other.start
 
-    def next(self) -> Optional["Note"]:
+    def next(self) -> Optional["Message"]:
         """
-        Get next note in notelist.
+        Get next message in msglist.
         """
         assert self.index is not None
-        assert self.notelist is not None
+        assert self.msglist is not None
 
         ind = self.index + 1
-        if ind >= len(self.notelist._notes):
+        if ind >= len(self.msglist._messages):
             return None
-        return self.notelist._notes[ind]
+        return self.msglist._messages[ind]
 
     def next_start(self, fallback: float = 1e9) -> float:
         """
-        Timestamp of next note's start.
+        Timestamp of next message's start.
 
-        :param fallback: Value to return if no next note.
+        :param fallback: Value to return if no next message.
         """
         return self.next.start if self.next else fallback
 
-    def prev(self) -> Optional["Note"]:
+    def prev(self) -> Optional["Message"]:
         """
-        Get previous note in notelist.
+        Get previous message in msglist.
         """
         assert self.index is not None
-        assert self.notelist is not None
+        assert self.msglist is not None
 
         ind = self.index - 1
         if ind < 0:
             return None
-        return self.notelist._notes[ind]
+        return self.msglist._messages[ind]
 
     def prev_start(self, fallback: float = -1e9) -> float:
         """
-        Timestamp of previous note's start.
+        Timestamp of previous message's start.
 
-        :param fallback: Value to return if no previous note.
+        :param fallback: Value to return if no previous message.
         """
         return self.prev.start if self.prev else fallback
 
     def prev_end(self, fallback: float = -1e9) -> float:
         """
-        Timestamp of previous note's end.
+        Timestamp of previous message's end.
 
-        :param fallback: Value to return if no previous note.
+        :param fallback: Value to return if no previous message.
         """
         return self.prev.end if self.prev else fallback
 
 
-class NoteList:
+class MessageList:
     """
-    Sequence of notes sorted by start time.
+    Sequence of messages sorted by start time.
     """
 
-    def __init__(self, notes: Optional[Sequence[Note]] = None):
+    def __init__(self, messages: Optional[Sequence[Message]] = None):
         """
-        Initialize from notes.
-        Also associates each note with self.
+        Initialize from message.
+        Creates copies of each message.
+        Also associates each message with self.
         """
-        if notes is None:
-            notes = []
+        if messages is None:
+            messages = []
 
-        self._notes = []
-        for note in notes:
-            note = note.copy()
-            note.notelist = self
-            note.index = len(self._notes)
-            self._notes.append(note)
+        self._messages = []
+        for msg in messages:
+            msg = msg.copy()
+            msg.msglist = self
+            msg.index = len(self._messages)
+            self._messages.append(msg)
 
-        self._notes.sort(key=lambda n: n.start)
-        self._noteset = sorted(set(n.note for n in self._notes))
+        self._messages.sort(key=lambda n: n.start)
+        self._noteset = sorted(set(n.note for n in self._messages))
 
     def __iter__(self):
-        yield from self._notes
+        yield from self._messages
 
     def __len__(self):
-        return len(self._notes)
+        return len(self._messages)
 
     def __getitem__(self, item):
-        return self._notes[item]
+        return self._messages[item]
 
     def __repr__(self):
-        return f"bmusic.NoteList({self._notes})"
+        return f"bmusic.MessageList({self._messages})"
 
     def noteset(self):
         """
@@ -142,31 +150,30 @@ class NoteList:
 
     def length(self) -> float:
         """
-        Duration, in frames, between first note's start and last note's end.
-        Does not regard offset.
+        Duration, in frames, between first msg's start and last msg's end.
         """
-        return self._notes[-1].end - self._notes[0].start
+        return self._messages[-1].end - self._messages[0].start
     
-    def filter_notes(self, notes: Sequence[int]) -> "NoteList":
+    def filter_messages(self, notes: Sequence[int]) -> "MessageList":
         """
-        Only keep notes in the given list.
+        Only keep messages with note in the given list.
         """
-        return NoteList([n for n in self._notes if n.note in notes])
+        return MessageList([n for n in self._messages if n.note in notes])
 
-    def split_notes(self):
+    def split_messages(self):
         """
         Split into multiple tracks, each containing only one note.
         """
         for note in self.noteset():
-            yield NoteList([n for n in self._notes if n.note == note])
+            yield MessageList([n for n in self._messages if n.note == note])
 
 
-def parse_midi(path: str, offset: float = 0, fps: float | None = None) -> NoteList:
+def parse_midi(path: str, offset: float = 0, fps: float | None = None) -> MessageList:
     """
     Parse MIDI from a file.
 
     :param path: Path to midi file.
-    :param offset: Offset in frames to add to all notes.
+    :param offset: Duration in frames of first message's start.
     :param fps: Frames per second (None for blender fps)
     """
     notes = []
@@ -189,10 +196,10 @@ def parse_midi(path: str, offset: float = 0, fps: float | None = None) -> NoteLi
             note = msg.note
             vel = msg.velocity if msg.type == "note_on" else 0
             if vel == 0:
-                n = Note(note, vels[note], starts[note]+offset, frame+offset)
+                n = Message(note, vels[note], starts[note]+offset, frame+offset)
                 notes.append(n)
             else:
                 starts[note] = frame
                 vels[note] = vel
 
-    return NoteList(notes)
+    return MessageList(notes)
