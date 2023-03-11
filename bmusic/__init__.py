@@ -1,5 +1,5 @@
-__version__ = "0.0.5"
+__version__ = "0.1.0"
 
 from .anim import *
 from .midi import *
-from . import proc
+#from . import proc

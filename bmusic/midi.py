@@ -1,11 +1,12 @@
-from typing import List, Sequence
+from typing import Optional, Sequence
 
 import bpy
 import mido
 
 __all__ = (
     "Note",
-    "Midi",
+    "NoteList",
+    "parse_midi"
 )
 
 
@@ -19,22 +20,28 @@ class Note:
     start: float
     end: float
 
-    def __init__(self, note, velocity, start, end, midi: "Midi", index: int):
+    def __init__(self, note, velocity, start, end, notelist: Optional["NoteList"] = None, index: Optional[int] = None):
         """
-        :param midi: Midi object this note belongs to.
-        :param index: Index of this note in the track. Allows for linked-list.
+        :param notelist: NoteList object this note belongs to.
+        :param index: Index of this note in the track. Allows for linked-list behavior.
         """
         self.note = note
         self.velocity = velocity
         self.start = start
         self.end = end
 
-        self.midi = midi
+        self.notelist = notelist
         self.index = index
 
     def __repr__(self):
-        return (f"animpiano.Note(note={self.note}, velocity={self.velocity}, "
+        return (f"bmusic.Note(note={self.note}, velocity={self.velocity}, "
                 f"start={self.start}, end={self.end})")
+
+    def copy(self) -> "Note":
+        """
+        Copy this note.
+        """
+        return Note(self.note, self.velocity, self.start, self.end, self.notelist, self.index)
 
     def diff(self, other: "Note") -> float:
         """
@@ -43,133 +50,149 @@ class Note:
         """
         return self.start - other.start
 
-    @property
-    def ind(self) -> int:
+    def next(self) -> Optional["Note"]:
         """
-        Index of self.note in self.midi.
+        Get next note in notelist.
         """
-        return self.midi.notes_used.index(self.note)
+        assert self.index is not None
+        assert self.notelist is not None
 
-    @property
-    def next(self) -> "Note":
-        """
-        Get next note in midi.
-        """
         ind = self.index + 1
-        if ind >= len(self.midi.notes):
+        if ind >= len(self.notelist._notes):
             return None
-        return self.midi.notes[ind]
+        return self.notelist._notes[ind]
 
-    @property
-    def next_start(self) -> float:
+    def next_start(self, fallback: float = 1e9) -> float:
         """
         Timestamp of next note's start.
-        1e9 if no next note.
-        """
-        return self.next.start if self.next else 1e9
 
-    @property
-    def prev(self) -> "Note":
+        :param fallback: Value to return if no next note.
         """
-        Get previous note in midi.
+        return self.next.start if self.next else fallback
+
+    def prev(self) -> Optional["Note"]:
         """
+        Get previous note in notelist.
+        """
+        assert self.index is not None
+        assert self.notelist is not None
+
         ind = self.index - 1
         if ind < 0:
             return None
-        return self.midi.notes[ind]
+        return self.notelist._notes[ind]
 
-    @property
-    def prev_start(self) -> float:
+    def prev_start(self, fallback: float = -1e9) -> float:
         """
         Timestamp of previous note's start.
-        -1e9 if no previous note.
-        """
-        return self.prev.start if self.prev else -1e9
 
-    @property
-    def prev_end(self) -> float:
+        :param fallback: Value to return if no previous note.
+        """
+        return self.prev.start if self.prev else fallback
+
+    def prev_end(self, fallback: float = -1e9) -> float:
         """
         Timestamp of previous note's end.
-        -1e9 if no previous note.
+
+        :param fallback: Value to return if no previous note.
         """
-        return self.prev.end if self.prev else -1e9
+        return self.prev.end if self.prev else fallback
 
 
-class Midi:
+class NoteList:
     """
-    Parse a midi file, combining all tracks.
+    Sequence of notes sorted by start time.
     """
 
-    def __init__(self, path: str = None, offset: float = 0) -> None:
+    def __init__(self, notes: Optional[Sequence[Note]] = None):
         """
-        Parse a midi file.
-
-        :param path: Path to midi file.
-        :param fps: Frames per second.
-        :param offset: Offset in frames to add to all notes.
+        Initialize from notes.
+        Also associates each note with self.
         """
-        self.notes = []
+        if notes is None:
+            notes = []
 
-        if path is None:
-            return
+        self._notes = []
+        for note in notes:
+            note = note.copy()
+            note.notelist = self
+            note.index = len(self._notes)
+            self._notes.append(note)
 
-        fps = bpy.context.scene.render.fps
-        midi = mido.MidiFile(path)
-
-        starts = [0] * 1000
-        vels = [0] * 1000
-
-        frame = 0
-        started = False
-        for msg in midi:
-            if started:
-                frame += msg.time * fps
-    
-            if msg.type.startswith("note_"):
-                started = True
-                note = msg.note
-                vel = msg.velocity if msg.type == "note_on" else 0
-                if vel == 0:
-                    n = Note(note, vels[note], starts[note]+offset, frame+offset, self, len(self.notes))
-                    self.notes.append(n)
-                else:
-                    starts[note] = frame
-                    vels[note] = vel
-
-        self._init()
+        self._notes.sort(key=lambda n: n.start)
+        self._noteset = sorted(set(n.note for n in self._notes))
 
     def __iter__(self):
-        return iter(self.notes)
+        yield from self._notes
 
     def __len__(self):
-        return len(self.notes)
+        return len(self._notes)
 
-    @classmethod
-    def from_notes(cls, notes: Sequence[Note]) -> "Midi":
-        """
-        Create a midi from a list of notes.
-        """
-        midi = Midi(None, None)
-        midi.notes = [Note(n.note, n.velocity, n.start, n.end, midi, i) for i, n in enumerate(notes)]
-        midi._init()
-        return midi
+    def __getitem__(self, item):
+        return self._notes[item]
 
-    @property
+    def __repr__(self):
+        return f"bmusic.NoteList({self._notes})"
+
+    def noteset(self):
+        """
+        Set of all notes used in this track.
+        """
+        return self._noteset
+
     def length(self) -> float:
         """
         Duration, in frames, between first note's start and last note's end.
         Does not regard offset.
         """
-        return self.notes[-1].end - self.notes[0].start
+        return self._notes[-1].end - self._notes[0].start
     
-    def filter_notes(self, good: Sequence[int]) -> "Midi":
+    def filter_notes(self, notes: Sequence[int]) -> "NoteList":
         """
-        Filter notes to only those in good.
+        Only keep notes in the given list.
         """
-        return Midi.from_notes(n for n in self.notes if n.note in good)
+        return NoteList([n for n in self._notes if n.note in notes])
 
-    def _init(self):
+    def split_notes(self):
         """
-        More initializing.
+        Split into multiple tracks, each containing only one note.
         """
-        self.notes_used = sorted(set(n.note for n in self.notes))
+        for note in self.noteset():
+            yield NoteList([n for n in self._notes if n.note == note])
+
+
+def parse_midi(path: str, offset: float = 0, fps: float | None = None) -> NoteList:
+    """
+    Parse MIDI from a file.
+
+    :param path: Path to midi file.
+    :param offset: Offset in frames to add to all notes.
+    :param fps: Frames per second (None for blender fps)
+    """
+    notes = []
+
+    fps = bpy.context.scene.render.fps if fps is None else fps
+    midi = mido.MidiFile(path)
+
+    # State of the last key press of note i.
+    starts = [0] * 1000
+    vels = [0] * 1000
+
+    frame = 0
+    started = False
+    for msg in midi:
+        if started:
+            frame += msg.time * fps
+
+        if msg.type.startswith("note_"):
+            started = True
+            note = msg.note
+            vel = msg.velocity if msg.type == "note_on" else 0
+            if vel == 0:
+                n = Note(note, vels[note], starts[note]+offset, frame+offset)
+                notes.append(n)
+            else:
+                starts[note] = frame
+                vels[note] = vel
+
+    return NoteList(notes)
