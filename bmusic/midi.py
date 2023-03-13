@@ -7,7 +7,7 @@ For example, this MIDI file has 100 messages,
 using a total of 10 different notes.
 """
 
-from typing import Optional, Sequence
+from typing import Generator, Optional, Sequence
 
 import bpy
 import mido
@@ -130,7 +130,7 @@ class MessageList:
         self._messages.sort(key=lambda n: n.start)
         self._noteset = sorted(set(n.note for n in self._messages))
 
-    def __iter__(self):
+    def __iter__(self) -> Generator[Message, None, None]:
         yield from self._messages
 
     def __len__(self):
