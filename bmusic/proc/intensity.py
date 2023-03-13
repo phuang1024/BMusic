@@ -1,6 +1,6 @@
 """
-Procedures relating to intensity of something e.g. light, piano key's rotation,
-string's vibration, etc.
+Procedures relating to intensity of something.
+e.g. light, piano key's depression, string's vibration, etc.
 """
 
 __all__ = (
@@ -13,6 +13,9 @@ __all__ = (
 import bpy
 import numpy as np
 
+from ..anim import *
+from ..midi import *
+from ..utils import *
 from .procedure import Procedure
 
 
@@ -20,19 +23,35 @@ class Intensity(Procedure):
     """
     Base intensity class.
 
-    Max intensity is determined by note velocity.
-
     :Parameters:
 
         - animkey: Animation key with following keys:
 
           - basis: Resting (intensity 0) position.
-          - on: Playing (intensity 1) position.
+          - on: Playing (intensity max) position.
+
+        - use_velocity: Whether to scale peak intensity based on
+          message velocity.
+
+          - Default: True
     """
+
+    animkey: AnimKey
+    use_velocity: bool
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.animkey = kwargs.get("animkey")
+        self.use_velocity = kwargs.get("use_velocity", True)
+
+    def get_intensity(self, msg: Message):
+        """
+        Returns either msg.velocity/127 or 1 depending on self.use_velocity
+        """
+        if self.use_velocity:
+            return msg.velocity / 127
+        else:
+            return 1
 
 
 class IntensityOnOff(Intensity):
@@ -46,7 +65,7 @@ class IntensityOnOff(Intensity):
 
     :Parameters:
 
-        - duration: Time, in seconds, to spend interpolating from states.
+        - duration: Time, in seconds, to spend interpolating between states.
 
           - Default: 0.1
 
@@ -54,6 +73,9 @@ class IntensityOnOff(Intensity):
 
           - Default: False
     """
+
+    duration: float
+    vector_handles: bool
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -64,24 +86,23 @@ class IntensityOnOff(Intensity):
         duration = self.duration * bpy.context.scene.render.fps
         handle = "VECTOR" if self.vector_handles else "AUTO_CLAMPED"
 
-        for i, note in enumerate(self.midi):
-            last = note.prev_end
-            next = note.next_start
+        stuff = compute_affixes(self.midi, max_prefix=duration, max_suffix=duration, suffix_after_end=True)
+        for msg in stuff:
+            intensity = self.get_intensity(msg)
 
+            # For brevity, make a list and call func later.
+            # List of (frame, value, key_type)
             keys = []
 
             # Initial resting position
-            if i == 0 or note.start-last > 2*duration:
-                keys.append((note.start-duration, 0, "JITTER"))
-
+            keys.append((msg.start-msg.prefix, 0, "JITTER"))
             # Playing through note
-            intensity = np.interp(note.velocity, [0, 127], [0, 1])
-            keys.append((note.start, intensity, "BREAKDOWN"))
-            keys.append((note.end, intensity, "BREAKDOWN"))
-
-            # Resting after note (sooner if next note close).
-            frame = min(note.end+duration, (note.end+next)/2)
-            keys.append((frame, 0, "JITTER"))
+            keys.append((msg.start, intensity, "BREAKDOWN"))
+            keys.append((msg.end, intensity, "BREAKDOWN"))
+            # Resting after note
+            if msg.suffix >= duration:
+                # Only if suffix is full length; otherwise, the next note will take care of it.
+                keys.append((msg.end+msg.suffix, 0, "JITTER"))
 
             for frame, value, type in keys:
                 self.animkey.animate(frame, handle=handle, type=type, on=value)

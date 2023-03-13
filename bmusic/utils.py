@@ -1,32 +1,22 @@
 __all__ = (
-    "Affix",
+    "AffixMessage",
     "compute_affixes",
 )
 
 from .midi import *
 
 
-class Affix:
+class AffixMessage(Message):
     """
-    Prefix and suffix for one message.
+    Prefix and suffix extension.
 
     ``prefix`` and ``suffix`` are lengths in frames.
     Based on application, suffix is either time after **start**
     or **end**.
     """
-    start: float
-    end: float
+
     prefix: float
     suffix: float
-
-    def __init__(self, start: float, end: float, prefix: float, suffix: float):
-        self.start = start
-        self.end = end
-        self.prefix = prefix
-        self.suffix = suffix
-
-    def __repr__(self) -> str:
-        return f"Affix({self.start}, {self.end}, {self.prefix}, {self.suffix})"
 
 
 def compute_affixes(
@@ -36,11 +26,11 @@ def compute_affixes(
         max_suffix: float = 1e9,
         suffix_after_end: bool = False,
         hard_end: bool = False
-        ) -> list[Affix]:
+        ) -> list[AffixMessage]:
     """
     For each message, compute length of prefix and suffix.
-    For example, a prefix may be a hammer anticipating,
-    and a suffix may be the bounce back.
+    For example, a prefix may be a hammer anticipating, and a suffix may
+    be the bounce back.
 
     Prefixes and suffixes don't overlap with the next message --- they
     will be shortened if next/prev note is too close.
@@ -108,7 +98,9 @@ def compute_affixes(
                 suffix_time = min(suffix_time, msg.end - msg.start)
 
         # Add to list
-        affix = Affix(msg.start, msg.end, prefix_time, suffix_time)
+        affix = AffixMessage(msg.note, msg.velocity, msg.start, msg.end)
+        affix.prefix = prefix_time
+        affix.suffix = suffix_time
         ret.append(affix)
 
     return ret

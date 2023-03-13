@@ -1,4 +1,8 @@
-from typing import Any, Mapping
+__all__ = (
+    "Procedure",
+)
+
+from ..midi import *
 
 
 class Procedure:
@@ -6,16 +10,17 @@ class Procedure:
     Procedure base class.
 
     A procedure animates objects, with input parameters from the user.
-    Example: Drum mallet animator, vibrating string, etc.
+    Procedures are generalized: For example, a hammer procedure can be applied
+    to a drum mallet, a piano key, etc.
 
     Extend from this class to create your animator. Subclasses inherit
     available parameters from the parent class.
 
-    :Keyword Arguments:
-        - midi: MIDI data.
+    :Parameters:
+        - midi: :class:`bmusic.MessageList` object containing messages to animate.
     """
 
-    params: Mapping[str, Any]
+    midi: MessageList
 
     def __init__(self, **kwargs):
         """
@@ -23,7 +28,8 @@ class Procedure:
 
         In the subclass, you may override this method, using more parameters.
         Subclasses inherit available parameters from the parent class.
-        However, always call super().__init__() to initialize the parent class.
+
+        Always call ``super().__init__()`` to initialize the parent class.
         """
         self.midi = kwargs.get("midi")
 

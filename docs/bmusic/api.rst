@@ -15,7 +15,9 @@ API documentation.
 ``bmusic.utils``
 ----------------
 
-.. autofunction:: bmusic.message_affixes
+.. autofunction:: bmusic.compute_affixes
+
+.. autoclass:: bmusic.AffixMessage
 
 ``bmusic.anim``
 ---------------
