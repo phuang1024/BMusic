@@ -1,10 +1,5 @@
-API
-===
-
-API documentation.
-
 ``bmusic.midi``
----------------
+===============
 
 .. autoclass:: bmusic.MessageList
    :members:
@@ -13,14 +8,14 @@ API documentation.
    :members:
 
 ``bmusic.utils``
-----------------
+================
 
 .. autofunction:: bmusic.compute_affixes
 
 .. autoclass:: bmusic.AffixMessage
 
 ``bmusic.anim``
----------------
+===============
 
 .. autoclass:: bmusic.Animator
    :members:
@@ -29,7 +24,7 @@ API documentation.
    :members:
 
 ``bmusic.proc``
----------------
+===============
 
 .. autoclass:: bmusic.proc.Procedure
    :members:

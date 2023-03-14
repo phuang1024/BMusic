@@ -148,7 +148,7 @@ class MessageList:
         """
         return self._noteset
 
-    def length(self) -> float:
+    def duration(self) -> float:
         """
         Duration, in frames, between first msg's start and last msg's end.
         """
