@@ -28,23 +28,29 @@ We can then call the ``animate`` method to insert keyframes. The arguments are
 AnimKey
 =======
 
-The :class:`~bmusic.AnimKey` class groups abstract named positions with their respective shapes
-for animation, inspired by Blender's Shape Key feature.
+The :class:`~bmusic.AnimKey` inspired by Blender's shape keys, pairs names with their specific
+animations.
 
 For example, an ``on`` position may be setting a light's power to ``100``, or a ``hit`` position
 may be setting a hammer's rotation to ``10``.
 
-AnimKeys allow us to write generalized algorithms while users are able to customize the exact motion.
+AnimKeys allow us to write **generalized algorithms** while users are able to **customize** the
+exact motion.
 
-For example, our algorithm may contain
+For example, a hammer algorithm may contain:
 
 .. code-block::
 
    for each note:
-       animate_hit(note)
+       anticipate(note)
+       hit(note)
+       recoil(note)
 
-What does a "hit" do? The user defines it to fit their needs. All our algorithm needs to do is
-perform a "hit".
+What do ``anticipate``, ``hit``, and ``recoil`` do? The user can define these keys --- maybe
+they set the hammer's rotation --- and our algorithm blindly uses them.
+
+This means that our algorithm is generalized: Maybe we can use it for a piano, bouncing ball,
+etc. The user would define what constitutes each action.
 
 Example
 -------
@@ -59,13 +65,20 @@ Example
    # Z location
    anim2 = bmusic.Animator(bpy.context.object, "location", 2)
 
+   # Define the animkey; basis is [0, 0]
    animkey = bmusic.AnimKey([anim1, anim2], [0, 0])
+   # New "up" key
    animkey["up"] = [0, 1]
+   # New "forward" key
    animkey["forward"] = [1, 0]
 
+   # Animate at frame=0 at basis
    animkey.animate(0)
+   # Animate at frame=30 with "up" key
    animkey.animate(30, up=1)
+   # Animate at frame=60 with "forward" key
    animkey.animate(60, forward=1)
+   # Animate at frame=90 with "up" and "forward" * -1
    animkey.animate(90, up=1, foward=-1, type="JITTER")
 
 AnimKeys control multiple animators at once. In this case, we created animators for the cube's X
@@ -78,7 +91,7 @@ second animator will animate to ``20``.
 When initializing the AnimKey, we always provide the ``basis`` key which can be thought of as the
 resting or default position. In this case, the basis is ``[0, 0]``, where the X and Z are both 0.
 
-Next, we can define more keys. The ``up`` key sets Z to ``1``, and ``forward`` sets X to ``1``.
+Next, we can define more keys. Here, the ``up`` key sets Z to ``1``, and ``forward`` sets X to ``1``.
 
 Last, we can call the ``animate`` method. The first argument is the frame. Other keyword arguments are
 the strengths of each key. We can combine keys, and strengths are not limited to ``(0, 1)``. The
