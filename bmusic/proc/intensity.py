@@ -86,8 +86,8 @@ class IntensityOnOff(Intensity):
         duration = self.duration * bpy.context.scene.render.fps
         handle = "VECTOR" if self.vector_handles else "AUTO_CLAMPED"
 
-        stuff = compute_affixes(self.midi, max_prefix=duration, max_suffix=duration, suffix_after_end=True)
-        for msg in stuff:
+        msgs = compute_affixes(self.midi, max_prefix=duration, max_suffix=duration, suffix_after_end=True)
+        for msg in msgs:
             intensity = self.get_intensity(msg)
 
             # For brevity, make a list and call func later.
