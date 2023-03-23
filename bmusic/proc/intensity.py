@@ -120,17 +120,17 @@ class IntensityFade(Intensity):
 
     :Parameters:
 
-        - fade_func: Function that curves linear time to fade intensity.
+        - fade_func: Monotonic decreasing function that curves linear time to fade intensity.
           Takes parameters ``(t,)`` (time in seconds since note start) and returns
           between 0 and 1, where 0 is off and 1 is max intensity. There are a few
           predefined functions in this class.
 
-          - Default EXPONENTIAL(0.6) (exponential decay at 0.6/sec)
+          - Default ``EXPONENTIAL(0.6)`` (exponential decay at 0.6/sec)
 
-        - key_interval: Interval in frames for decay section keyframes. Avoids unneccessary
+        - key_interval: Interval in seconds for decay keyframes. Avoids unneccessary
           keyframing on every frame.
 
-          - Default: 10
+          - Default: 0.2
 
         - off_thres: Threshold for intensity to be considered off.
 
@@ -140,11 +140,6 @@ class IntensityFade(Intensity):
           keep fading until next play, even if the note was released.
 
           - Default: True  (stops when note ends).
-
-        - use_velocity: Whether to scale intensities based on note velocity. That is, lower velocities
-          have lower peak (initial) intensity.
-        
-          - Default: True
     """
 
     def __init__(self, **kwargs):
@@ -153,55 +148,31 @@ class IntensityFade(Intensity):
         self.key_interval = kwargs.get("key_interval", 10)
         self.off_thres = kwargs.get("off_thres", 0.01)
         self.note_end = kwargs.get("note_end", True)
-        self.use_velocity = kwargs.get("use_velocity", True)
 
     def animate(self):
-        fps = bpy.context.scene.render.fps
+        #TODO copied from IntensityOnOff
+        key_interval = self.key_interval * bpy.context.scene.render.fps
 
-        # Whether last note ended (intensity reached 0) with enough time to require
-        # another keyframe at 0 before next note.
-        last_ended = True
+        msgs = compute_affixes(self.midi, max_prefix=duration, max_suffix=duration, suffix_after_end=True)
+        for msg in msgs:
+            intensity = self.get_intensity(msg)
 
-        for i, note in enumerate(self.midi):
-            last = note.prev_end
-            next = note.next_start
-            long_pause = next > note.end + 3   # Long between this end and next start
-            end_frame = next - 3
-            if self.note_end:
-                end_frame = min(note.end, end_frame)
+            # For brevity, make a list and call func later.
+            # List of (frame, value, key_type)
+            keys = []
 
-            mult = np.interp(note.velocity, [0, 127], [0, 1])
-            if not self.use_velocity:
-                mult = 1
+            # Initial resting position
+            keys.append((msg.start-msg.prefix, 0, "JITTER"))
+            # Playing through note
+            keys.append((msg.start, intensity, "BREAKDOWN"))
+            keys.append((msg.end, intensity, "BREAKDOWN"))
+            # Resting after note
+            if msg.suffix >= duration:
+                # Only if suffix is full length; otherwise, the next note will take care of it.
+                keys.append((msg.end+msg.suffix, 0, "JITTER"))
 
-            # Initial intensity
-            if last_ended:
-                self.animkey.animate(note.start-1, type="JITTER", on=0)
-            self.animkey.animate(note.start, type="EXTREME", on=mult*self.fade_func(0))
-
-            # Fading
-            frame = note.start
-            while True:
-                next_frame = frame + self.key_interval
-                intensity = self.fade_func((next_frame-note.start) / fps)
-
-                if next_frame > end_frame:
-                    final_int = self.fade_func((end_frame-frame) / fps)
-                    self.animkey.animate(end_frame, type="BREAKDOWN", on=mult*final_int)
-                    if long_pause:
-                        # Need to set to 0
-                        self.animkey.animate(end_frame+1, type="JITTER", on=0)
-                    break
-
-                if intensity < self.off_thres:
-                    self.animkey.animate(next_frame, type="JITTER", on=0)
-                    break
-
-                self.animkey.animate(next_frame, type="BREAKDOWN", on=mult*intensity)
-
-                frame = next_frame
-
-            last_ended = long_pause
+            for frame, value, type in keys:
+                self.animkey.animate(frame, handle=handle, type=type, on=value)
 
     @staticmethod
     def EXPONENTIAL(fac):
