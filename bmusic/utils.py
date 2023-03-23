@@ -59,6 +59,8 @@ def compute_affixes(
     :param track: Track to process.
     :param split: Ratio between prefix and suffix when they overlap.
         ``0`` means completely prefix, and ``1`` means completely suffix.
+        Split is when reducing prefix/suffix to fit; i.e.
+        try to set both to max len. If overlap, split the reduction.
     :param max_prefix: Maximum length of prefix in frames.
     :param max_suffix: Maximum length of suffix in frames.
     :param suffix_after_end: If true, suffix is after message ends. Else,
@@ -84,11 +86,13 @@ def compute_affixes(
     for msg in track:
         # Compute prefix
         total_prev_time = msg.start - get_end(msg.prev(), -1e9)
-        prefix_time = min(max_prefix, total_prev_time * (1-split))
+        overlap = max(max_prefix + max_suffix - total_prev_time, 0)
+        prefix_time = max_prefix - overlap * (1-split)
 
         # Compute suffix
         total_next_time = msg.next_start() - get_end(msg, 0)
-        suffix_time = min(max_suffix, total_next_time * split)
+        overlap = max(max_prefix + max_suffix - total_next_time, 0)
+        suffix_time = max_suffix - overlap * split
 
         # Adjust suffix if hard_end is True
         if hard_end:
