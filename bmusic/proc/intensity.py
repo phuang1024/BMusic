@@ -10,6 +10,8 @@ __all__ = (
     "IntensityWobble",
 )
 
+from typing import Callable
+
 import bpy
 import numpy as np
 
@@ -30,18 +32,31 @@ class Intensity(Procedure):
           - basis: Resting (intensity 0) position.
           - on: Playing (intensity max) position.
 
-        - use_velocity: Whether to scale peak intensity based on
-          message velocity.
+        - min_intensity: Minimum peak intensity. Happens when velocity is 0.
+
+          - Default: 0
+
+        - max_intensity: Maximum peak intensity. Happens when velocity is 127.
+
+          - Default: 1
+
+        - use_velocity: Whether to scale peak intensity based on message velocity.
+          If True, intensity is scaled from ``min_intensity`` to ``max_intensity``.
+          Otherwise, intensity is always ``max_intensity``.
 
           - Default: True
     """
 
     animkey: AnimKey
+    min_intensity: float
+    max_intensity: float
     use_velocity: bool
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.animkey = kwargs.get("animkey")
+        self.min_intensity = kwargs.get("min_intensity", 0)
+        self.max_intensity = kwargs.get("max_intensity", 1)
         self.use_velocity = kwargs.get("use_velocity", True)
 
     def get_intensity(self, msg: Message):
@@ -49,9 +64,9 @@ class Intensity(Procedure):
         Returns either msg.velocity/127 or 1 depending on self.use_velocity
         """
         if self.use_velocity:
-            return msg.velocity / 127
+            return np.interp(msg.velocity, [0, 127], [self.min_intensity, self.max_intensity])
         else:
-            return 1
+            return self.max_intensity
 
 
 class IntensityOnOff(Intensity):
@@ -152,6 +167,13 @@ class IntensityFade(Intensity):
 
           - Default: True  (stops when note ends).
     """
+
+    fade_func: Callable[[float], float]
+    start_time: float
+    key_interval: float
+    off_thres: float
+    max_len: float
+    note_end: bool
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
