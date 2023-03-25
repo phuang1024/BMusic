@@ -18,6 +18,9 @@ class AffixMessage(Message):
     prefix: float
     suffix: float
 
+    def __repr__(self) -> str:
+        return f"AffixMessage(msg={self}, prefix={self.prefix}, suffix={self.suffix})"
+
 
 def compute_affixes(
         track: MessageList,
@@ -59,8 +62,8 @@ def compute_affixes(
     :param track: Track to process.
     :param split: Ratio between prefix and suffix when they overlap.
         ``0`` means completely prefix, and ``1`` means completely suffix.
-        Split is when reducing prefix/suffix to fit; i.e.
-        try to set both to max len. If overlap, split the reduction.
+        Split is when reducing prefix/suffix to fit:
+        First, try to set both to max len. If overlap, split the reduction.
     :param max_prefix: Maximum length of prefix in frames.
     :param max_suffix: Maximum length of suffix in frames.
     :param suffix_after_end: If true, suffix is after message ends. Else,
