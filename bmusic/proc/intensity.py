@@ -7,7 +7,7 @@ __all__ = (
     "Intensity",
     "IntensityOnOff",
     "IntensityFade",
-    "IntensityWobble",
+    "IntensityOsc",
 )
 
 from typing import Callable
@@ -138,13 +138,13 @@ class IntensityFade(Intensity):
         - fade_func: Function that curves linear time to fade intensity.
           Takes parameters ``(t,)`` (time in seconds since note start) and returns
           between 0 and 1, where 0 is off and 1 is max intensity. There are a few
-          predefined functions in this class.
+          predefined functions ``bmusic.utils``
 
           - Default ``EXPONENTIAL(0.6)`` (exponential decay at 0.6/sec)
 
         - start_time: Time, in seconds, from off to initial on.
 
-          - Default: 0.1
+          - Default: 0.05
 
         - key_interval: Interval in seconds for decay keyframes. Avoids unneccessary
           keyframing on every frame.
@@ -177,8 +177,8 @@ class IntensityFade(Intensity):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.fade_func = kwargs.get("fade_func", self.EXPONENTIAL(0.6))
-        self.start_time = kwargs.get("start_time", 0.1)
+        self.fade_func = kwargs.get("fade_func", EXPONENTIAL(0.6))
+        self.start_time = kwargs.get("start_time", 0.05)
         self.key_interval = kwargs.get("key_interval", 0.3)
         self.off_thres = kwargs.get("off_thres", 0.001)
         self.max_len = kwargs.get("max_len", 60)
@@ -216,47 +216,35 @@ class IntensityFade(Intensity):
 
                 self.animkey.animate(frame, on=intensity*last_value, handle="VECTOR", type="BREAKDOWN")
 
-    @staticmethod
-    def EXPONENTIAL(fac):
-        """
-        Exponential decay with factor ``fac`` (in units per second).
-        """
-        return lambda t: np.exp(-fac*t)
 
-    @staticmethod
-    def LINEAR(fac):
-        """
-        Linear decay with factor ``fac`` (in units per second).
-        """
-        return lambda t: 1 - fac*t
-
-
-class IntensityWobble(Intensity):
+class IntensityOsc(Intensity):
     """
-    Wobbles between 1 and -1 when hit.
+    Oscillate between 1 and -1 when hit.
 
     :Keyframe types:
 
         - JITTER: Resting (intensity = 0).
-        - BREAKDOWN: Fading.
+        - BREAKDOWN: Oscillating and fading.
         - EXTREME: Max intensity (frame of hit).
 
     :Parameters:
 
-        - fade_fac: Exponential decay factor in factor/wobble.
+        Many parameters are same as :class:`IntensityFade`. See that class for docs about
+        those parameters.
 
-          - Default 0.7
+        - fade_func:
 
-        - period: Period of wobble in seconds.
+          - Default: ``EXPONENTIAL(0.6)``
+
+        - period: Period of oscillation in seconds.
 
           - Default: 1
 
-        - off_thres: Threshold for intensity to be considered off.
+        - off_thres:
 
           - Default: 0.01
 
-        - note_end: Whether to set intensity to 0 at end of note. If false, will keep wobbling
-          until next play.
+        - note_end:
 
           - Default: True  (stops when note ends).
     """

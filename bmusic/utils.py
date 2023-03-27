@@ -1,9 +1,28 @@
 __all__ = (
+    "EXPONENTIAL",
+    "LINEAR",
     "AffixMessage",
     "compute_affixes",
 )
 
+from typing import Callable
+
+import numpy as np
+
 from .midi import *
+
+
+def EXPONENTIAL(fac) -> Callable[[float], float]:
+    """
+    Exponential decay with factor ``fac`` (in units per second).
+    """
+    return lambda t: np.exp(-fac*t)
+
+def LINEAR(fac) -> Callable[[float], float]:
+    """
+    Linear decay with factor ``fac`` (in units per second).
+    """
+    return lambda t: 1 - fac*t
 
 
 class AffixMessage(Message):
