@@ -10,6 +10,7 @@ __all__ = (
     "IntensityOsc",
 )
 
+from math import cos, pi
 from typing import Callable
 
 import bpy
@@ -219,7 +220,10 @@ class IntensityFade(Intensity):
 
 class IntensityOsc(Intensity):
     """
-    Oscillate between 1 and -1 when hit.
+    Sinusoidal oscillation when a note is playing.
+    Specifically, ``anim(t)`` (the value animated) ``= intensity(t) * cos(t*...)``
+    The user provides an ``intensity`` function; e.g. exponential decay. This is then
+    multiplied by a sinusoidal function.
 
     :Keyframe types:
 
@@ -240,59 +244,76 @@ class IntensityOsc(Intensity):
 
           - Default: 1
 
+        - start_time:
+
+          - Default: 0.05
+
+        - key_interval: Note: A lower interval may be required than IntensityFade for the
+          same smooth appearance.
+
+          - Default: 0.1
+
         - off_thres:
 
-          - Default: 0.01
+          - Default: 0.001
+
+        - max_len:
+
+          - Default: 60
 
         - note_end:
 
-          - Default: True  (stops when note ends).
+          - Default: True
     """
+
+    fade_func: Callable[[float], float]
+    period: float
+    start_time: float
+    key_interval: float
+    off_thres: float
+    max_len: float
+    note_end: bool
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.fade_fac = kwargs.get("fade_fac", 0.7)
+        self.fade_func = kwargs.get("fade_func", EXPONENTIAL(0.6))
         self.period = kwargs.get("period", 1)
-        self.off_thres = kwargs.get("off_thres", 0.01)
+        self.start_time = kwargs.get("start_time", 0.05)
+        self.key_interval = kwargs.get("key_interval", 0.3)
+        self.off_thres = kwargs.get("off_thres", 0.001)
+        self.max_len = kwargs.get("max_len", 60)
         self.note_end = kwargs.get("note_end", True)
 
     def animate(self):
-        period = self.period * bpy.context.scene.render.fps
+        fps = bpy.context.scene.render.fps
+        start_time = self.start_time * fps
+        key_interval = self.key_interval * fps
+        max_len = self.max_len * fps
 
-        # Whether last note ended (intensity reached 0) with enough time to require
-        # another keyframe at 0 before next note.
-        last_ended = True
+        msgs = compute_affixes(self.midi, max_prefix=start_time, max_suffix=max_len, suffix_after_end=False, split=1)
+        last_value = 0
+        for msg in msgs:
+            intensity = self.get_intensity(msg)
 
-        for i, note in enumerate(self.midi):
-            last = note.prev_end
-            next = note.next_start
-            long_pause = next > note.end + 3   # Long between this end and next start
-            end_frame = next - 3
-            if self.note_end:
-                end_frame = min(note.end, end_frame)
-
-            intensity = np.interp(note.velocity, [0, 127], [0, 1])
-
-            # Initial intensity
-            if last_ended:
-                self.animkey.animate(note.start, type="JITTER", handle="VECTOR", on=0)
+            # Start
+            self.animkey.animate(msg.start-msg.prefix, on=intensity*last_value, handle="VECTOR", type="BREAKDOWN")
+            self.animkey.animate(msg.start, on=intensity, handle="VECTOR", type="EXTREME")
 
             # Fading
-            frame = note.start - period/2   # First wobble a little quicker.
-            i = 0
+            frame = msg.start
             while True:
-                intensity *= self.fade_fac
-                next_frame = frame + period
-
-                if next_frame > end_frame:
-                    break
-                if intensity < self.off_thres:
+                frame += key_interval
+                if frame > msg.start+msg.suffix:
                     break
 
-                curr_int = intensity if i % 2 == 0 else -intensity
-                self.animkey.animate(next_frame, type="BREAKDOWN", on=curr_int)
+                time = (frame-msg.start) / fps
+                last_value = self.fade_func(time)
 
-                frame = next_frame
-                i += 1
+                if last_value < self.off_thres:
+                    # Keyframe off
+                    self.animkey.animate(frame, on=0, handle="VECTOR", type="JITTER")
+                    last_value = 0
+                    break
 
-            last_ended = long_pause
+                value = intensity * last_value * cos(2*pi*time/self.period)
+                self.animkey.animate(frame, on=value, handle="VECTOR", type="BREAKDOWN")
