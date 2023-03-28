@@ -2,6 +2,8 @@ __all__ = (
     "Procedure",
 )
 
+from copy import deepcopy
+
 from ..midi import *
 
 
@@ -14,6 +16,8 @@ class ProcMetaCls(type):
     """
     Metaclass for procedures.
     Automatically generates property documentation.
+
+    Sets ``cls._params``, type set.
     """
 
     def __new__(cls, name, bases, attrs):
@@ -24,21 +28,22 @@ class ProcMetaCls(type):
             docstr = docstr.strip() + "\n\n"
             docstr += ":Parameters:\n\n"
 
-            params = []
+            params = set()
             for key, value in attrs.items():
                 if key.startswith("_"):
                     continue
                 if isinstance(value, (property, function)):
                     continue
-                params.append(key)
+                params.add(key)
             for key, value in attrs["__annotations__"].items():
                 if key.startswith("_"):
                     continue
                 if key in params:
                     continue
-                params.append(key)
+                params.add(key)
 
-            print(params)
+            curr_params = attrs.get("_params", set())
+            attrs["_params"] = params.union(curr_params)
 
         return super().__new__(cls, name, bases, attrs)
 
