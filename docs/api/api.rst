@@ -41,7 +41,7 @@
    :members:
    :show-inheritance:
 
-.. autoclass:: bmusic.proc.IntensityWobble
+.. autoclass:: bmusic.proc.IntensityOsc
    :members:
    :show-inheritance:
 
