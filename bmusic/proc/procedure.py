@@ -21,6 +21,9 @@ class ProcMetaCls(type):
     """
 
     def __new__(cls, name, bases, attrs):
+        params, base_params = ProcMetaCls.get_params(bases, attrs)
+        attrs["_params"] = params | base_params
+
         if attrs.get("_gen_docs", True):
             docstr = attrs.get("__doc__")
             if not isinstance(docstr, str):
@@ -28,24 +31,49 @@ class ProcMetaCls(type):
             docstr = docstr.strip() + "\n\n"
             docstr += ":Parameters:\n\n"
 
-            params = set()
-            for key, value in attrs.items():
-                if key.startswith("_"):
-                    continue
-                if isinstance(value, (property, function)):
-                    continue
-                params.add(key)
-            for key, value in attrs["__annotations__"].items():
-                if key.startswith("_"):
-                    continue
-                if key in params:
-                    continue
-                params.add(key)
+            all_params = sorted(params) + sorted(base_params)
+            for param in all_params:
+                docstr += f"- ``{param}``"
+                if param in base_params:
+                    docstr += " *(inherited)*"
+                else:
+                    docstr += ": " + attrs.get(f"_{param}", "") + "\n\n"
+                    if param in attrs["__annotations__"]:
+                        docstr += f"  - **Type:** {attrs['__annotations__'][param].__name__}\n"
+                    if param in attrs:
+                        docstr += f"  - **Default:** {attrs[param]}\n"
+                docstr += "\n"
 
-            curr_params = attrs.get("_params", set())
-            attrs["_params"] = params.union(curr_params)
+            attrs["__doc__"] = docstr
 
         return super().__new__(cls, name, bases, attrs)
+
+    @staticmethod
+    def get_params(bases, attrs) -> tuple[set[str], set[str]]:
+        """
+        Returns set of procedure parameters, extending from bases.
+        """
+        params = set()
+        for key, value in attrs.items():
+            if key.startswith("_"):
+                continue
+            if isinstance(value, (property, function)):
+                continue
+            params.add(key)
+        for key, value in attrs["__annotations__"].items():
+            if key.startswith("_"):
+                continue
+            if key in params:
+                continue
+            params.add(key)
+
+        base_params = set()
+        for cls in bases:
+            if hasattr(cls, "_params"):
+                base_params.update(cls._params)
+
+        return params, base_params
+
 
 
 class Procedure(metaclass=ProcMetaCls):
@@ -66,14 +94,12 @@ class Procedure(metaclass=ProcMetaCls):
     - Define another variable with the same name, but with a leading underscore,
       which holds the docstring.
     - If you don't want automatic docs, set ``_gen_docs = False``.
-
-    :Parameters:
-        - midi: :class:`bmusic.MessageList` object containing messages to animate.
     """
 
     _gen_docs = True
 
     midi: MessageList
+    _midi = ":class:`bmusic.MessageList` object containing messages to animate."
 
     def __init__(self, **kwargs):
         """
