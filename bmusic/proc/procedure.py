@@ -191,3 +191,10 @@ class Procedure(metaclass=ProcMetaCls):
         Do all animation.
         """
         raise NotImplementedError("Subclass must implement animate()")
+
+
+class MusicProc(Procedure):
+    """
+    Procedure superclass with utilities for music animation.
+    Yes, this library is meant for music animation, but the base Proe
+    """
