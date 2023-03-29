@@ -70,24 +70,17 @@ class IntensityOnOff(Intensity):
         - JITTER: Resting (intensity = 0).
         - BREAKDOWN: Playing.
 
-    :Parameters:
+    Parameters:
 
-        - duration: Time, in seconds, to spend interpolating between states.
+    duration
+        Time, in seconds, to spend interpolating between states.
 
-          - Default: 0.1
-
-        - vector_handles: Whether to use vector handles (no easing in or out).
-
-          - Default: False
+    vector_handles
+        Whether to use vector handles (no easing in or out).
     """
 
-    duration: float
-    vector_handles: bool
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.duration = kwargs.get("duration", 0.1)
-        self.vector_handles = kwargs.get("vector_handles", False)
+    duration: float = 0.05
+    vector_handles: bool = False
 
     def animate(self):
         duration = self.duration * bpy.context.scene.render.fps
@@ -125,56 +118,41 @@ class IntensityFade(Intensity):
         - BREAKDOWN: Fading.
         - EXTREME: Max intensity.
 
-    :Parameters:
+    Parameters:
 
-        - fade_func: Function that curves linear time to fade intensity.
-          Takes parameters ``(t,)`` (time in seconds since note start) and returns
-          between 0 and 1, where 0 is off and 1 is max intensity. There are a few
-          predefined functions ``bmusic.utils``
+    fade_func
+        Function that curves linear time to fade intensity.
+        Takes parameters ``(t,)`` (time in seconds since note start) and returns
+        between 0 and 1, where 0 is off and 1 is max intensity. There are a few
+        predefined functions ``bmusic.utils``
 
-          - Default ``EXPONENTIAL(0.6)`` (exponential decay at 0.6/sec)
+    start_time
+        Time, in seconds, from off to initial on.
 
-        - start_time: Time, in seconds, from off to initial on.
+    key_interval
+        Interval in seconds for decay keyframes. Avoids unneccessary
+        keyframing on every frame.
 
-          - Default: 0.05
+    off_thres
+        Threshold for intensity to be considered off. Keyframing will stop
+        at this point. If using a custom ``fade_func`` that is NOT monotonically decreasing,
+        set this to ``0``.
 
-        - key_interval: Interval in seconds for decay keyframes. Avoids unneccessary
-          keyframing on every frame.
+    max_len
+        Maximum length of note, in seconds. Keyframing will stop after this
+        time, even if the note is still playing.
 
-          - Default: 0.3
-
-        - off_thres: Threshold for intensity to be considered off. Keyframing will stop
-          at this point. If using a custom ``fade_func`` that is NOT monotonically decreasing,
-          set this to ``0``.
-
-          - Default: 0.001
-
-        - max_len: Maximum length of note, in seconds. Keyframing will stop after this
-          time, even if the note is still playing.
-
-          - Default: 60
-
-        - note_end: Whether to cut intensity to 0 at end of note. If false, the note will
-          keep fading until next play, even if the note was released.
-
-          - Default: True  (stops when note ends).
+    note_end
+        Whether to cut intensity to 0 at end of note. If false, the note will
+        keep fading until next play, even if the note was released.
     """
 
-    fade_func: Callable[[float], float]
-    start_time: float
-    key_interval: float
-    off_thres: float
-    max_len: float
-    note_end: bool
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.fade_func = kwargs.get("fade_func", EXPONENTIAL(0.6))
-        self.start_time = kwargs.get("start_time", 0.05)
-        self.key_interval = kwargs.get("key_interval", 0.3)
-        self.off_thres = kwargs.get("off_thres", 0.001)
-        self.max_len = kwargs.get("max_len", 60)
-        self.note_end = kwargs.get("note_end", True)
+    fade_func: Callable[[float], float] = EXPONENTIAL(0.6)
+    start_time: float = 0.05
+    key_interval: float = 0.3
+    off_thres: float = 0.001
+    max_len: float = 60
+    note_end: bool = True
 
     def animate(self):
         fps = bpy.context.scene.render.fps
@@ -222,58 +200,36 @@ class IntensityOsc(Intensity):
         - BREAKDOWN: Oscillating and fading.
         - EXTREME: Max intensity (frame of hit).
 
-    :Parameters:
+    Many parameters are same as :class:`IntensityFade`. See that class for docs about
+    those parameters.
 
-        Many parameters are same as :class:`IntensityFade`. See that class for docs about
-        those parameters.
+    Parameters:
 
-        - fade_func:
+    fade_func
 
-          - Default: ``EXPONENTIAL(0.6)``
+    period
+        Period of oscillation in seconds.
 
-        - period: Period of oscillation in seconds.
+    start_time
 
-          - Default: 1
+    key_interval
+        Note: A lower interval may be required than IntensityFade for the
+        same smooth appearance.
 
-        - start_time:
+    off_thres
 
-          - Default: 0.05
+    max_len
 
-        - key_interval: Note: A lower interval may be required than IntensityFade for the
-          same smooth appearance.
-
-          - Default: 0.1
-
-        - off_thres:
-
-          - Default: 0.001
-
-        - max_len:
-
-          - Default: 60
-
-        - note_end:
-
-          - Default: True
+    note_end
     """
 
-    fade_func: Callable[[float], float]
-    period: float
-    start_time: float
-    key_interval: float
-    off_thres: float
-    max_len: float
-    note_end: bool
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.fade_func = kwargs.get("fade_func", EXPONENTIAL(0.6))
-        self.period = kwargs.get("period", 1)
-        self.start_time = kwargs.get("start_time", 0.05)
-        self.key_interval = kwargs.get("key_interval", 0.3)
-        self.off_thres = kwargs.get("off_thres", 0.001)
-        self.max_len = kwargs.get("max_len", 60)
-        self.note_end = kwargs.get("note_end", True)
+    fade_func: Callable[[float], float] = EXPONENTIAL(0.6)
+    period: float = 1
+    start_time: float = 0.05
+    key_interval: float = 0.1
+    off_thres: float = 0.001
+    max_len: float = 60
+    note_end: bool = True
 
     def animate(self):
         fps = bpy.context.scene.render.fps
