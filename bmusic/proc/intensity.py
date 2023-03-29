@@ -25,35 +25,31 @@ from .procedure import Procedure
 class Intensity(Procedure):
     """
     Base intensity procedure.
+
+    Parameters:
+
+    animkey
+        Animation key with the following keys:
+
+            - basis: Resting (intensity 0) position.
+            - on: Playing (intensity max) position.
+
+    min_intensity
+        Minimum peak intensity. Happens when velocity is 0.
+
+    max_intensity
+        Maximum peak intensity. Happens when velocity is 127.
+
+    use_velocity
+        Whether to scale peak intensity based on message velocity.
+        If True, intensity is scaled from ``min_intensity`` to ``max_intensity``.
+        Otherwise, intensity is always ``max_intensity``.
     """
 
     animkey: AnimKey
-    _animkey = """
-    Animation key with following keys:
-
-        - basis: Resting (intensity 0) position.
-        - on: Playing (intensity max) position.
-    """
-
     min_intensity: float = 0
-    _min_intensity = "Minimum peak intensity. Happens when velocity is 0."
-
     max_intensity: float = 1
-    _max_intensity = "Maximum peak intensity. Happens when velocity is 127."
-
     use_velocity: bool = True
-    _use_velocity = """
-    Whether to scale peak intensity based on message velocity.
-    If True, intensity is scaled from ``min_intensity`` to ``max_intensity``.
-    Otherwise, intensity is always ``max_intensity``.
-    """
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.animkey = kwargs.get("animkey")
-        self.min_intensity = kwargs.get("min_intensity", 0)
-        self.max_intensity = kwargs.get("max_intensity", 1)
-        self.use_velocity = kwargs.get("use_velocity", True)
 
     def get_intensity(self, msg: Message):
         """

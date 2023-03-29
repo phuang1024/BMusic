@@ -29,6 +29,7 @@ class ProcMetaCls(type):
     param1
         This is a parameter.
         Multiline descriptions are allowed.
+        Must be 4 spaces indent.
 
     param2
         ...
@@ -59,7 +60,7 @@ class ProcMetaCls(type):
                         continue
 
                     if line.startswith(" ") and curr_param is not None:
-                        param_docs[curr_param] += line.strip() + "\n"
+                        param_docs[curr_param] += line[4:] + "\n"
                     else:
                         if line.strip():
                             curr_param = line.strip()
@@ -73,11 +74,11 @@ class ProcMetaCls(type):
                 if param in base_params:
                     docstr += " *(inherited)*"
                 else:
-                    docstr += ": " + param_docs.get(param, "").strip() + "\n\n"
+                    docstr += ":" + cls.reindent(param_docs.get(param, "").strip(), 2) + "\n\n"
                     if param in attrs["__annotations__"]:
                         docstr += f"  - **Type:** {attrs['__annotations__'][param].__name__}\n"
                     if param in attrs:
-                        docstr += f"  - **Default:** {attrs[param]}\n"
+                        docstr += f"  - **Default:** {attrs[param]}\n\n"
                 docstr += "\n"
 
             attrs["__doc__"] = docstr
