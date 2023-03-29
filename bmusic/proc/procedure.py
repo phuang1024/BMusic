@@ -38,6 +38,7 @@ class ProcMetaCls(type):
     def __new__(cls, name, bases, attrs):
         params, base_params = cls.get_params(bases, attrs)
         attrs["_params"] = params | base_params
+        annotations = attrs.get("__annotations__", {})
 
         if attrs.get("_gen_docs", True):
             # Get and indent docstring.
@@ -75,8 +76,8 @@ class ProcMetaCls(type):
                     docstr += " *(inherited)*"
                 else:
                     docstr += ":" + cls.reindent(param_docs.get(param, "").strip(), 2) + "\n\n"
-                    if param in attrs["__annotations__"]:
-                        docstr += f"  - **Type:** {attrs['__annotations__'][param].__name__}\n"
+                    if param in annotations:
+                        docstr += f"  - **Type:** {annotations[param].__name__}\n"
                     if param in attrs:
                         docstr += f"  - **Default:** {attrs[param]}\n\n"
                 docstr += "\n"
@@ -97,12 +98,13 @@ class ProcMetaCls(type):
             if isinstance(value, (property, function)):
                 continue
             params.add(key)
-        for key, value in attrs["__annotations__"].items():
-            if key.startswith("_"):
-                continue
-            if key in params:
-                continue
-            params.add(key)
+        if "__annotations__" in attrs:
+            for key, value in attrs["__annotations__"].items():
+                if key.startswith("_"):
+                    continue
+                if key in params:
+                    continue
+                params.add(key)
 
         base_params = set()
         for cls in bases:
