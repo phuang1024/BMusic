@@ -2,8 +2,6 @@ __all__ = (
     "Procedure",
 )
 
-from copy import deepcopy
-
 from ..midi import *
 
 
@@ -97,20 +95,33 @@ class Procedure(metaclass=ProcMetaCls):
     """
 
     _gen_docs = True
+    _params: set[str] = set()
+    """This is set by metaclass"""
 
     midi: MessageList
     _midi = ":class:`bmusic.MessageList` object containing messages to animate."
 
     def __init__(self, **kwargs):
         """
-        Initialize the procedure.
+        Don't override this method; this automatically sets parameters from kwargs.
 
-        In the subclass, you may override this method, using more parameters.
-        Subclasses inherit available parameters from the parent class.
-
-        Always call ``super().__init__()`` to initialize the parent class.
+        You can define the ``init`` method, which will be called from here.
+        ``init`` is passed the same kwargs as this method.
         """
-        self.midi = kwargs.get("midi")
+        for key, value in kwargs.items():
+            if key in self._params:
+                setattr(self, key, value)
+        for param in self._params:
+            if not hasattr(self, param):
+                raise ValueError(f"Missing parameter: {param}")
+
+        self.init(**kwargs)
+
+    def init(self, **kwargs):
+        """
+        Override this method to initialize your procedure.
+        """
+        pass
 
     def animate(self):
         """
