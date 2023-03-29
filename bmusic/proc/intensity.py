@@ -24,34 +24,29 @@ from .procedure import Procedure
 
 class Intensity(Procedure):
     """
-    Base intensity class.
-
-    :Parameters:
-
-        - animkey: Animation key with following keys:
-
-          - basis: Resting (intensity 0) position.
-          - on: Playing (intensity max) position.
-
-        - min_intensity: Minimum peak intensity. Happens when velocity is 0.
-
-          - Default: 0
-
-        - max_intensity: Maximum peak intensity. Happens when velocity is 127.
-
-          - Default: 1
-
-        - use_velocity: Whether to scale peak intensity based on message velocity.
-          If True, intensity is scaled from ``min_intensity`` to ``max_intensity``.
-          Otherwise, intensity is always ``max_intensity``.
-
-          - Default: True
+    Base intensity procedure.
     """
 
     animkey: AnimKey
-    min_intensity: float
-    max_intensity: float
-    use_velocity: bool
+    _animkey = """
+    Animation key with following keys:
+
+        - basis: Resting (intensity 0) position.
+        - on: Playing (intensity max) position.
+    """
+
+    min_intensity: float = 0
+    _min_intensity = "Minimum peak intensity. Happens when velocity is 0."
+
+    max_intensity: float = 1
+    _max_intensity = "Maximum peak intensity. Happens when velocity is 127."
+
+    use_velocity: bool = True
+    _use_velocity = """
+    Whether to scale peak intensity based on message velocity.
+    If True, intensity is scaled from ``min_intensity`` to ``max_intensity``.
+    Otherwise, intensity is always ``max_intensity``.
+    """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

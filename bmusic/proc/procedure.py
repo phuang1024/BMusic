@@ -16,26 +16,64 @@ class ProcMetaCls(type):
     Automatically generates property documentation.
 
     Sets ``cls._params``, type set.
+
+    In your class's docstring:
+
+    1. Write a parameters section at the end; this is denoted with the text ``Parameters:``.
+    2. For each parameter, document it.
+
+    Example:
+
+    Parameters:
+
+    param1
+        This is a parameter.
+        Multiline descriptions are allowed.
+
+    param2
+        ...
     """
 
     def __new__(cls, name, bases, attrs):
-        params, base_params = ProcMetaCls.get_params(bases, attrs)
+        params, base_params = cls.get_params(bases, attrs)
         attrs["_params"] = params | base_params
 
         if attrs.get("_gen_docs", True):
+            # Get and indent docstring.
             docstr = attrs.get("__doc__")
             if not isinstance(docstr, str):
                 docstr = ""
-            docstr = docstr.strip() + "\n\n"
-            docstr += ":Parameters:\n\n"
+            docstr = cls.reindent(docstr, 0).strip()
 
+            # Extract parameter docs.
+            param_docs = {}
+            if "Parameters:" in docstr:
+                ind = docstr.find("Parameters:")
+                param_docstr = docstr[ind:].strip()
+                docstr = docstr[:ind].strip()
+
+                curr_param = None
+                for i, line in enumerate(param_docstr.split("\n")):
+                    # Skip first line.
+                    if i == 0:
+                        continue
+
+                    if line.startswith(" ") and curr_param is not None:
+                        param_docs[curr_param] += line.strip() + "\n"
+                    else:
+                        if line.strip():
+                            curr_param = line.strip()
+                            param_docs[curr_param] = ""
+
+            # Add docs, type hints, and defaults.
+            docstr += "\n\n:Parameters:\n\n"
             all_params = sorted(params) + sorted(base_params)
             for param in all_params:
                 docstr += f"- ``{param}``"
                 if param in base_params:
                     docstr += " *(inherited)*"
                 else:
-                    docstr += ": " + attrs.get(f"_{param}", "") + "\n\n"
+                    docstr += ": " + param_docs.get(param, "").strip() + "\n\n"
                     if param in attrs["__annotations__"]:
                         docstr += f"  - **Type:** {attrs['__annotations__'][param].__name__}\n"
                     if param in attrs:
@@ -72,6 +110,25 @@ class ProcMetaCls(type):
 
         return params, base_params
 
+    @staticmethod
+    def reindent(text: str, indent: int) -> str:
+        max_indent = None
+        for line in text.split("\n"):
+            if not line.strip():
+                continue
+            curr_indent = len(line) - len(line.lstrip())
+            if max_indent is None:
+                max_indent = curr_indent
+            else:
+                max_indent = min(max_indent, curr_indent)
+        if max_indent is None:
+            return text
+
+        lines = []
+        for line in text.split("\n"):
+            lines.append(" "*indent + line[max_indent:])
+        return "\n".join(lines)
+
 
 
 class Procedure(metaclass=ProcMetaCls):
@@ -89,9 +146,13 @@ class Procedure(metaclass=ProcMetaCls):
     generate property docs.
 
     - For each property, type hint and/or define a default value in the class.
-    - Define another variable with the same name, but with a leading underscore,
-      which holds the docstring.
+    - Then write the docstring in the class's docstring, demonstrated below.
     - If you don't want automatic docs, set ``_gen_docs = False``.
+
+    Parameters:
+
+    midi
+        :class:`bmusic.MessageList` object containing messages to animate.
     """
 
     _gen_docs = True
@@ -99,7 +160,6 @@ class Procedure(metaclass=ProcMetaCls):
     """This is set by metaclass"""
 
     midi: MessageList
-    _midi = ":class:`bmusic.MessageList` object containing messages to animate."
 
     def __init__(self, **kwargs):
         """
