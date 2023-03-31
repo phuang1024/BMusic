@@ -26,8 +26,25 @@
 ``bmusic.proc``
 ===============
 
+``procedure.py``
+----------------
+
 .. autoclass:: bmusic.proc.Procedure
    :members:
+
+.. autoclass:: bmusic.proc.MusicProc
+   :members:
+   :show-inheritance:
+
+.. autoclass:: bmusic.proc.ForEachProc
+   :members:
+   :show-inheritance:
+
+.. autoclass:: bmusic.proc.ProcMetaCls
+   :members:
+
+``intensity.py``
+----------------
 
 .. autoclass:: bmusic.proc.Intensity
    :members:
@@ -45,9 +62,15 @@
    :members:
    :show-inheritance:
 
+``hammer.py``
+-------------
+
 .. autoclass:: bmusic.proc.Hammer
    :members:
    :show-inheritance:
+
+``scheduling.py``
+-----------------
 
 .. autoclass:: bmusic.proc.Scheduling
    :members:

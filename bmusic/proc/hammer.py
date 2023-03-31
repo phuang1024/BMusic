@@ -3,16 +3,15 @@ __all__ = (
 )
 
 import bpy
-import numpy as np
 
 from bmusic.utils import compute_affixes
 
 from ..anim import AnimKey
 from ..utils import *
-from .procedure import Procedure
+from .procedure import ForEachProc
 
 
-class Hammer(Procedure):
+class Hammer(ForEachProc):
     """
     Hammer movement: Resting, preparing, hitting, recoil, wobbling.
 
@@ -65,13 +64,12 @@ class Hammer(Procedure):
         prepare_time = self.prepare_time * fps
         recoil_time = self.recoil_time * fps
         osc_period = self.osc_period * fps
-        osc_count = self.osc_count
+        osc_count = self.osc_count + 1   # for ending "rest" oscillation.
         osc_decay = self.osc_decay
 
         before_time = prepare_time + hit_time
         osc_time = osc_period * osc_count
         after_time = osc_time + recoil_time
-        total_time = before_time + after_time
 
         msgs = compute_affixes(self.midi, max_prefix=before_time, max_suffix=after_time)
         for msg in msgs:
@@ -80,6 +78,7 @@ class Hammer(Procedure):
                 self.animkey.animate(msg.start - before_time, type="JITTER")
 
             # Prepare
+            intensity = self.get_intensity(msg)
             self.animkey.animate(msg.start - msg.prefix/2, type="BREAKDOWN", prepare=intensity)
 
             # Hit
@@ -91,9 +90,12 @@ class Hammer(Procedure):
                 if frame >= msg.suffix:
                     break
 
-                intensity = osc_decay ** (i+1)
+                if i == osc_count-1:
+                    value = 0
+                else:
+                    value = intensity * osc_decay ** (i+1)
                 name = "prepare" if i % 2 == 0 else "hit"
-                kwargs = {name: intensity}
+                kwargs = {name: value}
                 self.animkey.animate(msg.start + frame, type="KEYFRAME", **kwargs)
 
                 frame += osc_period

@@ -14,15 +14,14 @@ from math import cos, pi
 from typing import Callable
 
 import bpy
-import numpy as np
 
 from ..anim import *
 from ..midi import *
 from ..utils import *
-from .procedure import Procedure
+from .procedure import ForEachProc
 
 
-class Intensity(Procedure):
+class Intensity(ForEachProc):
     """
     Base intensity procedure.
 
@@ -33,32 +32,9 @@ class Intensity(Procedure):
 
             - basis: Resting (intensity 0) position.
             - on: Playing (intensity max) position.
-
-    min_intensity
-        Minimum peak intensity. Happens when velocity is 0.
-
-    max_intensity
-        Maximum peak intensity. Happens when velocity is 127.
-
-    use_velocity
-        Whether to scale peak intensity based on message velocity.
-        If True, intensity is scaled from ``min_intensity`` to ``max_intensity``.
-        Otherwise, intensity is always ``max_intensity``.
     """
 
     animkey: AnimKey
-    min_intensity: float = 0
-    max_intensity: float = 1
-    use_velocity: bool = True
-
-    def get_intensity(self, msg: Message):
-        """
-        Returns either msg.velocity/127 or 1 depending on self.use_velocity
-        """
-        if self.use_velocity:
-            return np.interp(msg.velocity, [0, 127], [self.min_intensity, self.max_intensity])
-        else:
-            return self.max_intensity
 
 
 class IntensityOnOff(Intensity):

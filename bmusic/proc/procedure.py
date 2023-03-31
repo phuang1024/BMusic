@@ -1,6 +1,11 @@
 __all__ = (
+    "ProcMetaCls",
     "Procedure",
+    "MusicProc",
+    "ForEachProc",
 )
+
+import numpy as np
 
 from ..midi import *
 
@@ -22,17 +27,19 @@ class ProcMetaCls(type):
     1. Write a parameters section at the end; this is denoted with the text ``Parameters:``.
     2. For each parameter, document it.
 
-    Example:
+    Example (put this at the end of docstring):
 
-    Parameters:
+    .. code-block:: none
 
-    param1
-        This is a parameter.
-        Multiline descriptions are allowed.
-        Must be 4 spaces indent.
+        Parameters:
 
-    param2
-        ...
+        param1
+            This is a parameter.
+            Multiline descriptions are allowed.
+            Must be 4 spaces indent.
+
+        param2
+            ...
     """
 
     def __new__(cls, name, bases, attrs):
@@ -149,20 +156,13 @@ class Procedure(metaclass=ProcMetaCls):
     generate property docs.
 
     - For each property, type hint and/or define a default value in the class.
-    - Then write the docstring in the class's docstring, demonstrated below.
+    - Then write the docstring in the class's docstring, explained further in the docs.
     - If you don't want automatic docs, set ``_gen_docs = False``.
-
-    Parameters:
-
-    midi
-        :class:`bmusic.MessageList` object containing messages to animate.
     """
 
     _gen_docs = True
     _params: set[str] = set()
     """This is set by metaclass"""
-
-    midi: MessageList
 
     def __init__(self, **kwargs):
         """
@@ -196,5 +196,38 @@ class Procedure(metaclass=ProcMetaCls):
 class MusicProc(Procedure):
     """
     Procedure superclass with utilities for music animation.
-    Yes, this library is meant for music animation, but the base Proe
+    Yes, this library is meant for music animation, but the base Procedure class
+    is empty.
+    This class has some stuff specific for music animation.
+
+    Parameters:
+
+    midi
+        :class:`bmusic.MessageList` object containing messages to animate.
     """
+
+    midi: MessageList
+
+
+class ForEachProc(MusicProc):
+    """
+    Base class meant for animating the same thing on each message.
+    e.g. for each message, do hammer; light up; etc.
+
+    Parameters:
+
+    min_intensity
+        Minimum peak intensity. Happens when velocity is 0.
+
+    max_intensity
+        Maximum peak intensity. Happens when velocity is 127.
+    """
+
+    min_intensity: float = 0
+    max_intensity: float = 1
+
+    def get_intensity(self, msg: Message):
+        """
+        Returns interpolated intensity from velocity.
+        """
+        return np.interp(msg.velocity, [0, 127], [self.min_intensity, self.max_intensity])
