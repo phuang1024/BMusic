@@ -3,6 +3,7 @@ __all__ = (
     "LINEAR",
     "AffixMessage",
     "compute_affixes",
+    "split_chords",
 )
 
 from typing import Callable
@@ -130,3 +131,25 @@ def compute_affixes(
         ret.append(affix)
 
     return ret
+
+
+def split_chords(midi: MessageList, threshold: float) -> list[list[Message]]:
+    """
+    Split a MIDI track into chords --- messages that play roughly at the same time.
+    Messages less than threshold apart will be combined into one chord.
+    Threshold units are whatever midi units are. Most likely frames.
+    """
+    chords = []
+
+    last_time = None
+    chord = []
+    for msg in midi:
+        if last_time is None:
+            chord.append(msg)
+        elif abs(msg.start - last_time) < threshold:
+            chord.append(msg)
+        else:
+            chords.append(chord)
+            chord = [msg]
+
+    return chords
