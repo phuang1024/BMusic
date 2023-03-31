@@ -26,7 +26,7 @@ class Scheduling(Procedure):
     animkeys
         List of animation keys, each corresponding to a hammer.
 
-        - ``move0``, ``move1``, ``move2``, ...: Move to note index i.
+            - ``move0``, ``move1``, ``move2``, ...: Move to note index i.
 
     dist_f
         Function to get distance or cost between two note indexes.
@@ -45,7 +45,10 @@ class Scheduling(Procedure):
 
     def animate(self):
         """
-        :return: A list. Each element is a Midi obj for the corresponding
+        Animates movement of each object to their messages.
+        Returns which messages were scheduled to each object.
+
+        :return: A list. Each element is a :class:`bmusic.MessageList` obj for the corresponding
             hammer to play.
         """
         self.fps = bpy.context.scene.render.fps  # For performance

@@ -13,6 +13,10 @@
 .. autofunction:: bmusic.compute_affixes
 
 .. autoclass:: bmusic.AffixMessage
+   :members:
+   :show-inheritance:
+
+.. autofunction:: bmusic.split_chords
 
 ``bmusic.anim``
 ===============
