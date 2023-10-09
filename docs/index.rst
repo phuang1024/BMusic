@@ -9,11 +9,12 @@ BMusic
    general/install.rst
 
 .. toctree::
-   :caption: Tutorials
+   :caption: Components
    :hidden:
 
    bmusic/about.rst
    bmusic/midi.rst
+   bmusic/affixes.rst
    bmusic/animate.rst
    bmusic/procedure.rst
 
