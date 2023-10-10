@@ -1,21 +1,26 @@
 Procedures
 ==========
 
-:class:`~bmusic.proc.Procedure` classes define animation algorithms, making use of :class:`~bmusic.AnimKey` objects.
-Because of the versatility of AnimKeys, Procedures can be very general. For example, a Procedure might be defined as
-``animate to key "up" when playing and "down" when not playing``. The user can then define what ``up`` and ``down``
+:class:`~bmusic.proc.Procedure` classes define animation algorithms, making use
+of :class:`~bmusic.AnimKey` objects. Because of the versatility of AnimKeys,
+Procedures can be very general.
+
+For example, a Procedure might be defined as ``animate to key "up" when playing
+and "down" when not playing``. The user can then define what ``up`` and ``down``
 mean via the AnimKey.
 
-Procedures should extend the Procedure base class. Every procedure has *parameters*, which are provided with keyword
-arguments in the constructor. Subclasses inherit available parameters from their parent class.
+Procedures should extend the Procedure base class. Every procedure has
+*parameters*, which are provided with keyword arguments in the constructor.
+Subclasses inherit available parameters from their parent class.
 
-If you would like to learn how to create your own Procedure, please see TODO. This page describes how to use procedures.
+If you would like to learn how to create your own Procedure, please see TODO.
+This page describes how to use procedures.
 
 Example
 -------
 
-This example uses the :class:`~bmusic.proc.IntensityOnOff` procedure, which turns on when a note plays and off when
-it stops.
+This example uses the :class:`~bmusic.proc.IntensityOnOff` procedure, which
+turns on when a note plays and off when it stops.
 
 .. code-block:: python
 
