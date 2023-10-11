@@ -1,9 +1,6 @@
 MIDI
 ====
 
-Basic MIDI processing
----------------------
-
 BMusic uses ``mido`` to parse MIDI files.
 
 BMusic implements two classes to represent MIDI data:
@@ -28,14 +25,16 @@ BMusic implements two classes to represent MIDI data:
    # Total duration in frames.
    print(midi.duration())
 
-   # Only notes (10, 11, 12)
-   print(midi.filter_notes({10, 11, 12}))
+   # Only messages that play notes (60, 62, 64, 65)
+   # These are MIDI notes; in this case, C4, D4, E4, F4.
+   print(midi.filter_notes({60, 62, 64, 65}))
 
    # Iterate through all messages.
    for note in midi:
        print(note)
 
-   # Split midi into tracks that each contain only one note.
+   # Split midi into tracks that each contain only one unique note.
+   # Useful when each object in your scene only plays one note; for example, one hammer on a piano.
    for track in midi.split_notes():
        print(f"This track has {len(track)} messages of the note {track[0].note}.")
 
