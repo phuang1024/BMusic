@@ -136,9 +136,10 @@ class IntensityFade(Intensity):
         key_interval = self.key_interval * fps
         max_len = self.max_len * fps
 
-        msgs = compute_affixes(self.midi, max_prefix=start_time, max_suffix=max_len, suffix_after_end=False, split=1)
+        msgs = compute_affixes(self.midi, max_prefix=start_time, max_suffix=max_len, suffix_after_end=False, split=0)
         last_value = 0
         for msg in msgs:
+            print(msg)
             intensity = self.get_intensity(msg)
 
             # Start
@@ -147,14 +148,14 @@ class IntensityFade(Intensity):
 
             # Fading
             frame = msg.start
+            added_key = False
             while True:
                 frame += key_interval
-                if frame > msg.start+msg.suffix:
+                if frame > msg.start + msg.suffix:
                     break
+                added_key = True
 
-                #last_value = self.fade_func((frame - msg.start) / fps)
-                # TODO
-                last_value = EXPONENTIAL(0.6)((frame - msg.start) / fps)
+                last_value = self.fade_func((frame - msg.start) / fps)
 
                 if last_value < self.off_thres:
                     # Keyframe off
@@ -163,6 +164,12 @@ class IntensityFade(Intensity):
                     break
 
                 self.animkey.animate(frame, on=intensity*last_value, handle="VECTOR", type="BREAKDOWN")
+
+            if not added_key:
+                print("NOTADDED!")
+                # Suffix was too short for ``key_interval``.
+                # Here, we set ``last_value`` to the appropriate value, and the next iteration will key it for us.
+                last_value = self.fade_func(msg.suffix / fps)
 
 
 class IntensityOsc(Intensity):
