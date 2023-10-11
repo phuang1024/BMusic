@@ -168,7 +168,7 @@ class MessageList:
             yield MessageList([n for n in self._messages if n.note == note])
 
 
-def parse_midi(path: str, offset: float = 0, fps: float | None = None) -> MessageList:
+def parse_midi(path: str, offset: float = 0, fps: Optional[float] = None) -> MessageList:
     """
     Parse MIDI from a file.
 
@@ -178,7 +178,8 @@ def parse_midi(path: str, offset: float = 0, fps: float | None = None) -> Messag
     """
     notes = []
 
-    fps = bpy.context.scene.render.fps if fps is None else fps
+    if fps is None:
+        fps = bpy.context.scene.render.fps
     midi = mido.MidiFile(path)
 
     # State of the last key press of note i.

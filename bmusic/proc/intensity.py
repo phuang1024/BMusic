@@ -152,7 +152,9 @@ class IntensityFade(Intensity):
                 if frame > msg.start+msg.suffix:
                     break
 
-                last_value = self.fade_func((frame-msg.start)/fps)
+                #last_value = self.fade_func((frame - msg.start) / fps)
+                # TODO
+                last_value = EXPONENTIAL(0.6)((frame - msg.start) / fps)
 
                 if last_value < self.off_thres:
                     # Keyframe off
