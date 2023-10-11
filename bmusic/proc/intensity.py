@@ -7,7 +7,6 @@ __all__ = (
     "Intensity",
     "IntensityOnOff",
     "IntensityFade",
-    "IntensityOsc",
 )
 
 from math import cos, pi
@@ -112,7 +111,7 @@ class IntensityFade(Intensity):
     off_thres
         Threshold for intensity to be considered off. Keyframing will stop
         at this point. If using a custom ``fade_func`` that is NOT monotonically decreasing,
-        set this to ``0``.
+        set this to ``0`` (or negative).
 
     max_len
         Maximum length of note, in seconds. Keyframing will stop after this
@@ -123,7 +122,7 @@ class IntensityFade(Intensity):
         keep fading until next play, even if the note was released.
     """
 
-    fade_func: Callable[[float], float] = EXPONENTIAL(0.6)
+    fade_func: Callable[[float], float] = lambda t: EXPONENTIAL(0.6, t)
     start_time: float = 0.05
     key_interval: float = 0.3
     off_thres: float = 0.001
@@ -139,7 +138,6 @@ class IntensityFade(Intensity):
         msgs = compute_affixes(self.midi, max_prefix=start_time, max_suffix=max_len, suffix_after_end=False, split=0)
         last_value = 0
         for msg in msgs:
-            print(msg)
             intensity = self.get_intensity(msg)
 
             # Start
@@ -157,7 +155,7 @@ class IntensityFade(Intensity):
 
                 last_value = self.fade_func((frame - msg.start) / fps)
 
-                if last_value < self.off_thres:
+                if self.off_thres > 0 and last_value < self.off_thres:
                     # Keyframe off
                     self.animkey.animate(frame, on=0, handle="VECTOR", type="JITTER")
                     last_value = 0
@@ -166,86 +164,6 @@ class IntensityFade(Intensity):
                 self.animkey.animate(frame, on=intensity*last_value, handle="VECTOR", type="BREAKDOWN")
 
             if not added_key:
-                print("NOTADDED!")
                 # Suffix was too short for ``key_interval``.
                 # Here, we set ``last_value`` to the appropriate value, and the next iteration will key it for us.
                 last_value = self.fade_func(msg.suffix / fps)
-
-
-class IntensityOsc(Intensity):
-    """
-    Sinusoidal oscillation when a note is playing.
-    Specifically, ``anim(t)`` (the value animated) ``= intensity(t) * cos(t*...)``
-    The user provides an ``intensity`` function; e.g. exponential decay. This is then
-    multiplied by a sinusoidal function.
-
-    :Keyframe types:
-
-        - JITTER: Resting (intensity = 0).
-        - BREAKDOWN: Oscillating and fading.
-        - EXTREME: Max intensity (frame of hit).
-
-    Many parameters are same as :class:`IntensityFade`. See that class for docs about
-    those parameters.
-
-    Parameters:
-
-    fade_func
-
-    period
-        Period of oscillation in seconds.
-
-    start_time
-
-    key_interval
-        Note: A lower interval may be required than IntensityFade for the
-        same smooth appearance.
-
-    off_thres
-
-    max_len
-
-    note_end
-    """
-
-    fade_func: Callable[[float], float] = EXPONENTIAL(0.6)
-    period: float = 1
-    start_time: float = 0.05
-    key_interval: float = 0.1
-    off_thres: float = 0.001
-    max_len: float = 60
-    note_end: bool = True
-
-    def animate(self):
-        fps = bpy.context.scene.render.fps
-        start_time = self.start_time * fps
-        key_interval = self.key_interval * fps
-        max_len = self.max_len * fps
-
-        msgs = compute_affixes(self.midi, max_prefix=start_time, max_suffix=max_len, suffix_after_end=False, split=1)
-        last_value = 0
-        for msg in msgs:
-            intensity = self.get_intensity(msg)
-
-            # Start
-            self.animkey.animate(msg.start-msg.prefix, on=intensity*last_value, handle="VECTOR", type="BREAKDOWN")
-            self.animkey.animate(msg.start, on=intensity, handle="VECTOR", type="EXTREME")
-
-            # Fading
-            frame = msg.start
-            while True:
-                frame += key_interval
-                if frame > msg.start+msg.suffix:
-                    break
-
-                time = (frame-msg.start) / fps
-                last_value = self.fade_func(time)
-
-                if last_value < self.off_thres:
-                    # Keyframe off
-                    self.animkey.animate(frame, on=0, handle="VECTOR", type="JITTER")
-                    last_value = 0
-                    break
-
-                value = intensity * last_value * cos(2*pi*time/self.period)
-                self.animkey.animate(frame, on=value, handle="VECTOR", type="BREAKDOWN")

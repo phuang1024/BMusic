@@ -62,10 +62,6 @@
    :members:
    :show-inheritance:
 
-.. autoclass:: bmusic.proc.IntensityOsc
-   :members:
-   :show-inheritance:
-
 ``hammer.py``
 -------------
 
