@@ -15,7 +15,8 @@ import mido
 __all__ = (
     "Message",
     "MessageList",
-    "parse_midi"
+    "parse_midi",
+    "split_chords",
 )
 
 
@@ -204,3 +205,25 @@ def parse_midi(path: str, offset: float = 0, fps: Optional[float] = None) -> Mes
                 vels[note] = vel
 
     return MessageList(notes)
+
+
+def split_chords(midi: MessageList, threshold: float) -> list[list[Message]]:
+    """
+    Split a MIDI track into chords --- messages that play roughly at the same time.
+    Messages less than threshold apart will be combined into one chord.
+    Threshold units are whatever midi units are. Most likely frames.
+    """
+    chords = []
+
+    last_time = None
+    chord = []
+    for msg in midi:
+        if last_time is None:
+            chord.append(msg)
+        elif abs(msg.start - last_time) < threshold:
+            chord.append(msg)
+        else:
+            chords.append(chord)
+            chord = [msg]
+
+    return chords

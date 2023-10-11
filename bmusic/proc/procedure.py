@@ -196,7 +196,8 @@ class Procedure(metaclass=ProcMetaCls):
 class MusicProc(Procedure):
     """
     Procedure superclass with utilities for music animation.
-    Yes, this library is meant for music animation, but the base Procedure class
+
+    Yes, this whole library is meant for music animation, but the base Procedure class
     is empty.
     This class has some stuff specific for music animation.
 

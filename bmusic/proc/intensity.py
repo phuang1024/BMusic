@@ -9,11 +9,11 @@ __all__ = (
     "IntensityFade",
 )
 
-from math import cos, pi
 from typing import Callable
 
 import bpy
 
+from ..affix import *
 from ..anim import *
 from ..midi import *
 from ..utils import *
@@ -141,7 +141,7 @@ class IntensityFade(Intensity):
             intensity = self.get_intensity(msg)
 
             # Start
-            self.animkey.animate(msg.start-msg.prefix, on=intensity*last_value, handle="VECTOR", type="BREAKDOWN")
+            self.animkey.animate(msg.start-msg.prefix, on=last_value, handle="VECTOR", type="BREAKDOWN")
             self.animkey.animate(msg.start, on=intensity, handle="VECTOR", type="EXTREME")
 
             # Fading
@@ -153,7 +153,7 @@ class IntensityFade(Intensity):
                     break
                 added_key = True
 
-                last_value = self.fade_func((frame - msg.start) / fps)
+                last_value = intensity * self.fade_func((frame - msg.start) / fps)
 
                 if self.off_thres > 0 and last_value < self.off_thres:
                     # Keyframe off
@@ -161,9 +161,9 @@ class IntensityFade(Intensity):
                     last_value = 0
                     break
 
-                self.animkey.animate(frame, on=intensity*last_value, handle="VECTOR", type="BREAKDOWN")
+                self.animkey.animate(frame, on=last_value, handle="VECTOR", type="BREAKDOWN")
 
             if not added_key:
                 # Suffix was too short for ``key_interval``.
                 # Here, we set ``last_value`` to the appropriate value, and the next iteration will key it for us.
-                last_value = self.fade_func(msg.suffix / fps)
+                last_value = intensity * self.fade_func(msg.suffix / fps)

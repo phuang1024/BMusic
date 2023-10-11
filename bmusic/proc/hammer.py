@@ -4,8 +4,7 @@ __all__ = (
 
 import bpy
 
-from bmusic.utils import compute_affixes
-
+from ..affix import compute_affixes
 from ..anim import AnimKey
 from ..utils import *
 from .procedure import ForEachProc
