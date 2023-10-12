@@ -70,9 +70,10 @@ class Hammer(ForEachProc):
         osc_time = osc_period * osc_count
         after_time = osc_time + recoil_time
 
-        msgs = compute_affixes(self.midi, max_prefix=before_time, max_suffix=after_time)
+        msgs = compute_affixes(self.midi, max_prefix=before_time, max_suffix=after_time, split=0)
+        prev_ended = True
         for msg in msgs:
-            if msg.prefix >= before_time:
+            if prev_ended:
                 # Need to key at rest first.
                 self.animkey.animate(msg.start - before_time, type="JITTER")
 
@@ -84,6 +85,7 @@ class Hammer(ForEachProc):
             self.animkey.animate(msg.start, type="EXTREME", handle="VECTOR", hit=1)
 
             # Oscillation
+            prev_ended = False
             frame = recoil_time
             for i in range(osc_count):
                 if frame >= msg.suffix:
@@ -102,3 +104,4 @@ class Hammer(ForEachProc):
             # Ending
             if msg.suffix >= after_time:
                 self.animkey.animate(msg.start + frame, type="JITTER")
+                prev_ended = True
