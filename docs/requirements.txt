@@ -1,1 +1,2 @@
 fake-bpy-module-latest
+furo
