@@ -1,38 +1,39 @@
 """
-Procedures relating to intensity of something e.g. light, piano key's rotation,
-string's vibration, etc.
+Procedures relating to intensity of something.
+e.g. light, piano key's depression, string's vibration, etc.
 """
 
 __all__ = (
     "Intensity",
     "IntensityOnOff",
     "IntensityFade",
-    "IntensityWobble",
 )
 
+from typing import Callable
+
 import bpy
-import numpy as np
 
-from .procedure import Procedure
+from ..affix import *
+from ..anim import *
+from ..midi import *
+from ..utils import *
+from .procedure import ForEachProc
 
 
-class Intensity(Procedure):
+class Intensity(ForEachProc):
     """
-    Base intensity class.
+    Base intensity procedure.
 
-    Max intensity is determined by note velocity.
+    Parameters:
 
-    :Parameters:
+    animkey
+        Animation key with the following keys:
 
-        - animkey: Animation key with following keys:
-
-          - basis: Resting (intensity 0) position.
-          - on: Playing (intensity 1) position.
+            - basis: Resting (intensity 0) position.
+            - on: Playing (intensity max) position.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.animkey = kwargs.get("animkey")
+    animkey: AnimKey
 
 
 class IntensityOnOff(Intensity):
@@ -44,44 +45,39 @@ class IntensityOnOff(Intensity):
         - JITTER: Resting (intensity = 0).
         - BREAKDOWN: Playing.
 
-    :Parameters:
+    Parameters:
 
-        - duration: Time, in seconds, to spend interpolating from states.
+    duration
+        Time, in seconds, to spend interpolating between states.
 
-          - Default: 0.1
-
-        - vector_handles: Whether to use vector handles (no easing in or out).
-
-          - Default: False
+    vector_handles
+        Whether to use vector handles (no easing in or out).
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.duration = kwargs.get("duration", 0.1)
-        self.vector_handles = kwargs.get("vector_handles", False)
+    duration: float = 0.05
+    vector_handles: bool = False
 
     def animate(self):
         duration = self.duration * bpy.context.scene.render.fps
         handle = "VECTOR" if self.vector_handles else "AUTO_CLAMPED"
 
-        for i, note in enumerate(self.midi):
-            last = note.prev_end
-            next = note.next_start
+        msgs = compute_affixes(self.midi, max_prefix=duration, max_suffix=duration, suffix_after_end=True)
+        for msg in msgs:
+            intensity = self.get_intensity(msg)
 
+            # For brevity, make a list and call func later.
+            # List of (frame, value, key_type)
             keys = []
 
             # Initial resting position
-            if i == 0 or note.start-last > 2*duration:
-                keys.append((note.start-duration, 0, "JITTER"))
-
+            keys.append((msg.start-msg.prefix, 0, "JITTER"))
             # Playing through note
-            intensity = np.interp(note.velocity, [0, 127], [0, 1])
-            keys.append((note.start, intensity, "BREAKDOWN"))
-            keys.append((note.end, intensity, "BREAKDOWN"))
-
-            # Resting after note (sooner if next note close).
-            frame = min(note.end+duration, (note.end+next)/2)
-            keys.append((frame, 0, "JITTER"))
+            keys.append((msg.start, intensity, "BREAKDOWN"))
+            keys.append((msg.end, intensity, "BREAKDOWN"))
+            # Resting after note
+            if msg.suffix >= duration:
+                # Only if suffix is full length; otherwise, the next note will take care of it.
+                keys.append((msg.end+msg.suffix, 0, "JITTER"))
 
             for frame, value, type in keys:
                 self.animkey.animate(frame, handle=handle, type=type, on=value)
@@ -97,180 +93,77 @@ class IntensityFade(Intensity):
         - BREAKDOWN: Fading.
         - EXTREME: Max intensity.
 
-    :Parameters:
+    Parameters:
 
-        - fade_func: Function that curves linear time to fade intensity.
-          Takes parameters ``(t,)`` (time in seconds since note start) and returns
-          between 0 and 1, where 0 is off and 1 is max intensity. There are a few
-          predefined functions in this class.
+    fade_func
+        Function that curves linear time to fade intensity.
+        Takes parameters ``(t,)`` (time in seconds since note start) and returns
+        between 0 and 1, where 0 is off and 1 is max intensity. There are a few
+        predefined functions ``bmusic.utils``
 
-          - Default EXPONENTIAL(0.6) (exponential decay at 0.6/sec)
+    start_time
+        Time, in seconds, from off to initial on.
 
-        - key_interval: Interval in frames for decay section keyframes. Avoids unneccessary
-          keyframing on every frame.
+    key_interval
+        Interval in seconds for decay keyframes. Avoids unneccessary
+        keyframing on every frame.
 
-          - Default: 10
+    off_thres
+        Threshold for intensity to be considered off. Keyframing will stop
+        at this point. If using a custom ``fade_func`` that is NOT monotonically decreasing,
+        set this to ``0`` (or negative).
 
-        - off_thres: Threshold for intensity to be considered off.
+    max_len
+        Maximum length of note, in seconds. Keyframing will stop after this
+        time, even if the note is still playing.
 
-          - Default: 0.01
-
-        - note_end: Whether to cut intensity to 0 at end of note. If false, the note will
-          keep fading until next play, even if the note was released.
-
-          - Default: True  (stops when note ends).
-
-        - use_velocity: Whether to scale intensities based on note velocity. That is, lower velocities
-          have lower peak (initial) intensity.
-        
-          - Default: True
+    note_end
+        Whether to cut intensity to 0 at end of note. If false, the note will
+        keep fading until next play, even if the note was released.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.fade_func = kwargs.get("fade_func", self.EXPONENTIAL(0.6))
-        self.key_interval = kwargs.get("key_interval", 10)
-        self.off_thres = kwargs.get("off_thres", 0.01)
-        self.note_end = kwargs.get("note_end", True)
-        self.use_velocity = kwargs.get("use_velocity", True)
+    fade_func: Callable[[float], float] = lambda t: EXPONENTIAL(0.6, t)
+    start_time: float = 0.05
+    key_interval: float = 0.3
+    off_thres: float = 0.001
+    max_len: float = 60
+    note_end: bool = True
 
     def animate(self):
         fps = bpy.context.scene.render.fps
+        start_time = self.start_time * fps
+        key_interval = self.key_interval * fps
+        max_len = self.max_len * fps
 
-        # Whether last note ended (intensity reached 0) with enough time to require
-        # another keyframe at 0 before next note.
-        last_ended = True
+        msgs = compute_affixes(self.midi, max_prefix=start_time, max_suffix=max_len, suffix_after_end=False, split=0)
+        last_value = 0
+        for msg in msgs:
+            intensity = self.get_intensity(msg)
 
-        for i, note in enumerate(self.midi):
-            last = note.prev_end
-            next = note.next_start
-            long_pause = next > note.end + 3   # Long between this end and next start
-            end_frame = next - 3
-            if self.note_end:
-                end_frame = min(note.end, end_frame)
-
-            mult = np.interp(note.velocity, [0, 127], [0, 1])
-            if not self.use_velocity:
-                mult = 1
-
-            # Initial intensity
-            if last_ended:
-                self.animkey.animate(note.start-1, type="JITTER", on=0)
-            self.animkey.animate(note.start, type="EXTREME", on=mult*self.fade_func(0))
+            # Start
+            self.animkey.animate(msg.start-msg.prefix, on=last_value, handle="VECTOR", type="BREAKDOWN")
+            self.animkey.animate(msg.start, on=intensity, handle="VECTOR", type="EXTREME")
 
             # Fading
-            frame = note.start
+            frame = msg.start
+            added_key = False
             while True:
-                next_frame = frame + self.key_interval
-                intensity = self.fade_func((next_frame-note.start) / fps)
+                frame += key_interval
+                if frame > msg.start + msg.suffix:
+                    break
+                added_key = True
 
-                if next_frame > end_frame:
-                    final_int = self.fade_func((end_frame-frame) / fps)
-                    self.animkey.animate(end_frame, type="BREAKDOWN", on=mult*final_int)
-                    if long_pause:
-                        # Need to set to 0
-                        self.animkey.animate(end_frame+1, type="JITTER", on=0)
+                last_value = intensity * self.fade_func((frame - msg.start) / fps)
+
+                if self.off_thres > 0 and last_value < self.off_thres:
+                    # Keyframe off
+                    self.animkey.animate(frame, on=0, handle="VECTOR", type="JITTER")
+                    last_value = 0
                     break
 
-                if intensity < self.off_thres:
-                    self.animkey.animate(next_frame, type="JITTER", on=0)
-                    break
+                self.animkey.animate(frame, on=last_value, handle="VECTOR", type="BREAKDOWN")
 
-                self.animkey.animate(next_frame, type="BREAKDOWN", on=mult*intensity)
-
-                frame = next_frame
-
-            last_ended = long_pause
-
-    @staticmethod
-    def EXPONENTIAL(fac):
-        """
-        Exponential decay with factor ``fac`` (in units per second).
-        """
-        return lambda t: np.exp(-fac*t)
-
-    @staticmethod
-    def LINEAR(fac):
-        """
-        Linear decay with factor ``fac`` (in units per second).
-        """
-        return lambda t: 1 - fac*t
-
-
-class IntensityWobble(Intensity):
-    """
-    Wobbles between 1 and -1 when hit.
-
-    :Keyframe types:
-
-        - JITTER: Resting (intensity = 0).
-        - BREAKDOWN: Fading.
-        - EXTREME: Max intensity (frame of hit).
-
-    :Parameters:
-
-        - fade_fac: Exponential decay factor in factor/wobble.
-
-          - Default 0.7
-
-        - period: Period of wobble in seconds.
-
-          - Default: 1
-
-        - off_thres: Threshold for intensity to be considered off.
-
-          - Default: 0.01
-
-        - note_end: Whether to set intensity to 0 at end of note. If false, will keep wobbling
-          until next play.
-
-          - Default: True  (stops when note ends).
-    """
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.fade_fac = kwargs.get("fade_fac", 0.7)
-        self.period = kwargs.get("period", 1)
-        self.off_thres = kwargs.get("off_thres", 0.01)
-        self.note_end = kwargs.get("note_end", True)
-
-    def animate(self):
-        period = self.period * bpy.context.scene.render.fps
-
-        # Whether last note ended (intensity reached 0) with enough time to require
-        # another keyframe at 0 before next note.
-        last_ended = True
-
-        for i, note in enumerate(self.midi):
-            last = note.prev_end
-            next = note.next_start
-            long_pause = next > note.end + 3   # Long between this end and next start
-            end_frame = next - 3
-            if self.note_end:
-                end_frame = min(note.end, end_frame)
-
-            intensity = np.interp(note.velocity, [0, 127], [0, 1])
-
-            # Initial intensity
-            if last_ended:
-                self.animkey.animate(note.start, type="JITTER", handle="VECTOR", on=0)
-
-            # Fading
-            frame = note.start - period/2   # First wobble a little quicker.
-            i = 0
-            while True:
-                intensity *= self.fade_fac
-                next_frame = frame + period
-
-                if next_frame > end_frame:
-                    break
-                if intensity < self.off_thres:
-                    break
-
-                curr_int = intensity if i % 2 == 0 else -intensity
-                self.animkey.animate(next_frame, type="BREAKDOWN", on=curr_int)
-
-                frame = next_frame
-                i += 1
-
-            last_ended = long_pause
+            if not added_key:
+                # Suffix was too short for ``key_interval``.
+                # Here, we set ``last_value`` to the appropriate value, and the next iteration will key it for us.
+                last_value = intensity * self.fade_func(msg.suffix / fps)

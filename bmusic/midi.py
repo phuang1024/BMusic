@@ -1,175 +1,229 @@
-from typing import List, Sequence
+"""
+"note" refers to a pitch, represented as an integer in MIDI.
+For example, there are 88 notes on a piano.
+
+"message" refers to an instance of a note being played.
+For example, this MIDI file has 100 messages,
+using a total of 10 different notes.
+"""
+
+from typing import Generator, Optional, Sequence
 
 import bpy
 import mido
 
 __all__ = (
-    "Note",
-    "Midi",
+    "Message",
+    "MessageList",
+    "parse_midi",
+    "split_chords",
 )
 
 
-class Note:
+class Message:
     """
-    Note with absolute start and end time in frames.
+    Message with absolute start and end time in frames.
     Also supports linked-list like behavior within track.
     """
+
     note: int
     velocity: int
     start: float
     end: float
 
-    def __init__(self, note, velocity, start, end, midi: "Midi", index: int):
+    def __init__(self, note, velocity, start, end, msglist: Optional["MessageList"] = None, index: Optional[int] = None):
         """
-        :param midi: Midi object this note belongs to.
-        :param index: Index of this note in the track. Allows for linked-list.
+        :param msglist: MessageList object this message belongs to.
+        :param index: Index of this message in the track. Allows for linked-list behavior.
         """
         self.note = note
         self.velocity = velocity
         self.start = start
         self.end = end
 
-        self.midi = midi
+        self.msglist = msglist
         self.index = index
 
     def __repr__(self):
-        return (f"animpiano.Note(note={self.note}, velocity={self.velocity}, "
+        return (f"bmusic.Message(note={self.note}, velocity={self.velocity}, "
                 f"start={self.start}, end={self.end})")
 
-    def diff(self, other: "Note") -> float:
+    def copy(self) -> "Message":
+        return Message(self.note, self.velocity, self.start, self.end, self.msglist, self.index)
+
+    def diff(self, other: "Message") -> float:
         """
-        Calculate difference in frames between this note and another's start.
-        Positive if this note starts after other.
+        Calculate difference in frames between this message and another's start.
+        Positive if this message starts after other.
         """
         return self.start - other.start
 
-    @property
-    def ind(self) -> int:
+    def next(self) -> Optional["Message"]:
         """
-        Index of self.note in self.midi.
+        Get next message in msglist.
         """
-        return self.midi.notes_used.index(self.note)
+        assert self.index is not None
+        assert self.msglist is not None
 
-    @property
-    def next(self) -> "Note":
-        """
-        Get next note in midi.
-        """
         ind = self.index + 1
-        if ind >= len(self.midi.notes):
+        if ind >= len(self.msglist._messages):
             return None
-        return self.midi.notes[ind]
+        return self.msglist._messages[ind]
 
-    @property
-    def next_start(self) -> float:
+    def next_start(self, fallback: float = 1e9) -> float:
         """
-        Timestamp of next note's start.
-        1e9 if no next note.
-        """
-        return self.next.start if self.next else 1e9
+        Timestamp of next message's start.
 
-    @property
-    def prev(self) -> "Note":
+        :param fallback: Value to return if no next message.
         """
-        Get previous note in midi.
+        return self.next().start if self.next() else fallback
+
+    def prev(self) -> Optional["Message"]:
         """
+        Get previous message in msglist.
+        """
+        assert self.index is not None
+        assert self.msglist is not None
+
         ind = self.index - 1
         if ind < 0:
             return None
-        return self.midi.notes[ind]
+        return self.msglist._messages[ind]
 
-    @property
-    def prev_start(self) -> float:
+    def prev_start(self, fallback: float = -1e9) -> float:
         """
-        Timestamp of previous note's start.
-        -1e9 if no previous note.
-        """
-        return self.prev.start if self.prev else -1e9
+        Timestamp of previous message's start.
 
-    @property
-    def prev_end(self) -> float:
+        :param fallback: Value to return if no previous message.
         """
-        Timestamp of previous note's end.
-        -1e9 if no previous note.
+        return self.prev().start if self.prev() else fallback
+
+    def prev_end(self, fallback: float = -1e9) -> float:
         """
-        return self.prev.end if self.prev else -1e9
+        Timestamp of previous message's end.
+
+        :param fallback: Value to return if no previous message.
+        """
+        return self.prev().end if self.prev() else fallback
 
 
-class Midi:
+class MessageList:
     """
-    Parse a midi file, combining all tracks.
+    Sequence of messages sorted by start time.
     """
 
-    def __init__(self, path: str = None, offset: float = 0) -> None:
+    def __init__(self, messages: Optional[Sequence[Message]] = None):
         """
-        Parse a midi file.
-
-        :param path: Path to midi file.
-        :param fps: Frames per second.
-        :param offset: Offset in frames to add to all notes.
+        Initialize from message.
+        Creates copies of each message.
+        Also associates each message with self.
         """
-        self.notes = []
+        if messages is None:
+            messages = []
 
-        if path is None:
-            return
+        self._messages = []
+        for msg in messages:
+            msg = msg.copy()
+            msg.msglist = self
+            msg.index = len(self._messages)
+            self._messages.append(msg)
 
-        fps = bpy.context.scene.render.fps
-        midi = mido.MidiFile(path)
+        self._messages.sort(key=lambda n: n.start)
+        self._noteset = sorted(set(n.note for n in self._messages))
 
-        starts = [0] * 1000
-        vels = [0] * 1000
-
-        frame = 0
-        started = False
-        for msg in midi:
-            if started:
-                frame += msg.time * fps
-    
-            if msg.type.startswith("note_"):
-                started = True
-                note = msg.note
-                vel = msg.velocity if msg.type == "note_on" else 0
-                if vel == 0:
-                    n = Note(note, vels[note], starts[note]+offset, frame+offset, self, len(self.notes))
-                    self.notes.append(n)
-                else:
-                    starts[note] = frame
-                    vels[note] = vel
-
-        self._init()
-
-    def __iter__(self):
-        return iter(self.notes)
+    def __iter__(self) -> Generator[Message, None, None]:
+        yield from self._messages
 
     def __len__(self):
-        return len(self.notes)
+        return len(self._messages)
 
-    @classmethod
-    def from_notes(cls, notes: Sequence[Note]) -> "Midi":
-        """
-        Create a midi from a list of notes.
-        """
-        midi = Midi(None, None)
-        midi.notes = [Note(n.note, n.velocity, n.start, n.end, midi, i) for i, n in enumerate(notes)]
-        midi._init()
-        return midi
+    def __getitem__(self, item):
+        return self._messages[item]
 
-    @property
-    def length(self) -> float:
+    def __repr__(self):
+        return f"bmusic.MessageList({self._messages})"
+
+    def noteset(self):
         """
-        Duration, in frames, between first note's start and last note's end.
-        Does not regard offset.
+        Set of all notes used in this track.
         """
-        return self.notes[-1].end - self.notes[0].start
+        return self._noteset
+
+    def duration(self) -> float:
+        """
+        Duration, in frames, between first msg's start and last msg's end.
+        """
+        return self._messages[-1].end - self._messages[0].start
     
-    def filter_notes(self, good: Sequence[int]) -> "Midi":
+    def filter_notes(self, notes: Sequence[int]) -> "MessageList":
         """
-        Filter notes to only those in good.
+        Only keep messages with note in the given list.
         """
-        return Midi.from_notes(n for n in self.notes if n.note in good)
+        return MessageList([n for n in self._messages if n.note in notes])
 
-    def _init(self):
+    def split_notes(self):
         """
-        More initializing.
+        Split into multiple tracks, each containing only one note.
         """
-        self.notes_used = sorted(set(n.note for n in self.notes))
+        for note in self.noteset():
+            yield MessageList([n for n in self._messages if n.note == note])
+
+
+def parse_midi(path: str, offset: float = 0, fps: Optional[float] = None) -> MessageList:
+    """
+    Parse MIDI from a file.
+
+    :param path: Path to midi file.
+    :param offset: Duration in frames of first message's start.
+    :param fps: Frames per second (None for blender fps)
+    """
+    notes = []
+
+    if fps is None:
+        fps = bpy.context.scene.render.fps
+    midi = mido.MidiFile(path)
+
+    # State of the last key press of note i.
+    starts = [0] * 1000
+    vels = [0] * 1000
+
+    frame = 0
+    started = False
+    for msg in midi:
+        if started:
+            frame += msg.time * fps
+
+        if msg.type.startswith("note_"):
+            started = True
+            note = msg.note
+            vel = msg.velocity if msg.type == "note_on" else 0
+            if vel == 0:
+                n = Message(note, vels[note], starts[note]+offset, frame+offset)
+                notes.append(n)
+            else:
+                starts[note] = frame
+                vels[note] = vel
+
+    return MessageList(notes)
+
+
+def split_chords(midi: MessageList, threshold: float) -> list[list[Message]]:
+    """
+    Split a MIDI track into chords --- messages that play roughly at the same time.
+    Messages less than threshold apart will be combined into one chord.
+    Threshold units are whatever midi units are. Most likely frames.
+    """
+    chords = []
+
+    last_time = None
+    chord = []
+    for msg in midi:
+        if last_time is None:
+            chord.append(msg)
+        elif abs(msg.start - last_time) < threshold:
+            chord.append(msg)
+        else:
+            chords.append(chord)
+            chord = [msg]
+
+    return chords

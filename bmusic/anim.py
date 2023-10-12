@@ -3,7 +3,7 @@ __all__ = (
     "AnimKey",
 )
 
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 import bpy
 import numpy as np
@@ -28,7 +28,7 @@ class Animator:
     """Blender object to animate."""
 
     def __init__(self, obj: bpy.types.Object, data_path: str, index: int = 0,
-            action_name: str = None):
+            action_name: Optional[str] = None):
         """
         :param index: If a vector property, index of the component to animate, e.g. index 1 for Y location.
         :param action_name: Creates new action for obj with this name if not already present.
@@ -51,7 +51,7 @@ class Animator:
     def data_path(self):
         return self._fcurve.data_path
 
-    def animate(self, frame: int, value: Any, handle: str = "AUTO_CLAMPED", type: str = "KEYFRAME"):
+    def animate(self, frame: float, value: Any, handle: str = "AUTO_CLAMPED", type: str = "KEYFRAME"):
         """
         Insert keyframe.
         """
@@ -121,6 +121,13 @@ class AnimKey:
 
     def __len__(self):
         return len(self._keys)
+
+    def __call__(self, *args, **kwargs):
+        """
+        Same as self.animate(...)
+        Included for brevity.
+        """
+        return self.animate(*args, **kwargs)
 
     def animate(self, frame: float, handle: str = "AUTO_CLAMPED", type: str = "KEYFRAME",
             **kwargs):

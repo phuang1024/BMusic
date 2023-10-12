@@ -9,17 +9,24 @@ BMusic
    general/install.rst
 
 .. toctree::
-   :caption: Using BMusic
+   :caption: Components
    :hidden:
 
-   bmusic/about.rst
-   bmusic/midi.rst
-   bmusic/animate.rst
-   bmusic/procedure.rst
-   bmusic/api.rst
+   components/midi.rst
+   components/affixes.rst
+   components/animator.rst
+   components/animkey.rst
+   components/procedure.rst
 
 .. toctree::
-   :caption: Blog
+   :caption: Tutorials
    :hidden:
 
-   blog/binary_bach.rst
+   tutorials/speaker.rst
+   tutorials/first.rst
+
+.. toctree::
+   :caption: API Reference
+   :hidden:
+
+   api/api.rst
