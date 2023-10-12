@@ -77,17 +77,20 @@ class ProcMetaCls(type):
             # Add docs, type hints, and defaults.
             docstr += "\n\n:Parameters:\n\n"
             all_params = sorted(params) + sorted(base_params)
-            for param in all_params:
-                docstr += f"- ``{param}``"
-                if param in base_params:
-                    docstr += " *(inherited)*"
-                else:
-                    docstr += ":" + cls.reindent(param_docs.get(param, "").strip(), 2) + "\n\n"
-                    if param in annotations:
-                        docstr += f"  - **Type:** {annotations[param].__name__}\n"
-                    if param in attrs:
-                        docstr += f"  - **Default:** {attrs[param]}\n\n"
-                docstr += "\n"
+            if all_params:
+                for param in all_params:
+                    docstr += f"- ``{param}``"
+                    if param in base_params:
+                        docstr += " *(inherited)*"
+                    else:
+                        docstr += ":" + cls.reindent(param_docs.get(param, "").strip(), 2) + "\n\n"
+                        if param in annotations:
+                            docstr += f"  - **Type:** {annotations[param].__name__}\n"
+                        if param in attrs:
+                            docstr += f"  - **Default:** {attrs[param]}\n\n"
+                    docstr += "\n"
+            else:
+                docstr += "None\n\n"
 
             attrs["__doc__"] = docstr
 
@@ -182,7 +185,9 @@ class Procedure(metaclass=ProcMetaCls):
 
     def init(self, **kwargs):
         """
-        Override this method to initialize your procedure.
+        This is called after parameters are set from ``__init__``.
+
+        Override this method to do custom initialization.
         """
         pass
 

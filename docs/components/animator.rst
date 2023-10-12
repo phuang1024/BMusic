@@ -6,6 +6,7 @@ Animator
 The :class:`~bmusic.Animator` class provides an interface to Blender's fcurve
 animation API. This class does not add many features, but is easier to use.
 
+
 Example
 -------
 

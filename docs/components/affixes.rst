@@ -4,6 +4,7 @@ Affixes
 BMusic has utilities to compute *affixes* for each message in a track, described
 below.
 
+
 What are affixes?
 -----------------
 
@@ -27,6 +28,7 @@ available before and after each message.
 
 These are called *affixes*: The *prefix* is the time before, and the *suffix* is
 after.
+
 
 How affixes are computed
 ------------------------
@@ -96,6 +98,7 @@ message's suffix completely disappears.
 
 Here, the final result is shown. When the messages don't overlap, they have
 their normal affixes. When they do overlap, the split line is used.
+
 
 BMusic API
 ----------

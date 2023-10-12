@@ -29,6 +29,7 @@ This means that our algorithm is generalized: Maybe we can reuse the hammer
 procedure for a piano key, a bouncing ball, etc. The user would define what
 constitutes each action.
 
+
 Example
 -------
 
