@@ -12,11 +12,17 @@ BMusic
    :caption: Components
    :hidden:
 
-   bmusic/about.rst
-   bmusic/midi.rst
-   bmusic/affixes.rst
-   bmusic/animate.rst
-   bmusic/procedure.rst
+   components/midi.rst
+   components/affixes.rst
+   components/animate.rst
+   components/procedure.rst
+
+.. toctree::
+   :caption: Tutorials
+   :hidden:
+
+   tutorials/speaker.rst
+   tutorials/first.rst
 
 .. toctree::
    :caption: API Reference
