@@ -14,7 +14,8 @@ BMusic
 
    components/midi.rst
    components/affixes.rst
-   components/animate.rst
+   components/animator.rst
+   components/animkey.rst
    components/procedure.rst
 
 .. toctree::

@@ -48,7 +48,7 @@ Make sure to set the ``offset`` to the frame at which the speaker was added.
    # Set offset to the appropriate frame
    midi = bmusic.parse_midi("/path/to/OneNote.mid", offset=...)
 
-Next, create the Animator instance. See :ref:`animation` and
+Next, create the Animator instance. See :ref:`animator` and
 :class:`bmusic.Animator` for more details.
 
 .. code-block:: python
@@ -58,7 +58,7 @@ Next, create the Animator instance. See :ref:`animation` and
    # For single element properties (like pass index), omit the last argument.
    anim = bmusic.Animator(obj, "location", 0)
 
-Next, create the AnimKey instance. See :ref:`animation` and
+Next, create the AnimKey instance. See :ref:`animkey` and
 :class:`bmusic.AnimKey` for more details.
 
 Here, we need to refer to the docs of our Procedure, which we use in the next
