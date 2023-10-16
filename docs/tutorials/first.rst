@@ -89,3 +89,58 @@ should move in sync with the music.
 If applicable, increase the end frame so you can view the full animation.
 
 .. image:: ../images/TutorialOneNote.jpg
+
+
+Multiple notes
+--------------
+
+This example shows how animate multiple objects, one corresponding to each note.
+
+For example, you may have many piano hammers, each of which plays only one
+specific note.
+
+Use your best judgment to follow certain steps from the previous example, e.g.
+adding the new script file.
+
+#. Download :download:`../assets/MultiNote.mid` and
+   :download:`../assets/MultiNote.mp3`.
+
+Setup scene
+^^^^^^^^^^^
+
+#. Rename the default cube to ``cube.000``. This is Blender's default naming
+   format, and Blender will automatically increment the number when we duplicate
+   the object.
+
+#. The example MIDI has 5 distinct notes. Duplicate the cube 4 times, so you
+   have a total of 5 cubes.
+
+   - Move the cubes so they are not overlapping. Move them **not** along the
+     X-axis, as that will be animated.
+
+Code
+^^^^
+
+We will use the ``split_notes`` method of :class:`bmusic.MessageList`, which
+returns a sequence of new tracks, each containing only one distinct note.
+
+At the same time, we will create new Animators, AnimKeys, and Procedures for the
+object corresponding to the given note.
+
+.. code-block:: python
+
+   import bmusic
+   import bpy
+
+   midi = bmusic.parse_midi("/path/to/MultiNote.mid", offset=...)
+
+   for i, track in enumerate(midi.split_notes()):
+       # Get corresponding object
+       obj = bpy.data.objects[f"cube.{i:03d}"]
+
+       # Do animation (see prev example)
+       anim = bmusic.Animator(obj, "location", 0)
+       animkey = bmusic.AnimKey([anim], [0])
+       animkey["on"] = [1]
+       proc = bmusic.proc.IntensityOnOff(midi=track, animkey=animkey)
+       proc.animate()
