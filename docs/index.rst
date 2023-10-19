@@ -26,7 +26,8 @@ BMusic
    tutorials/first.rst
 
 .. toctree::
-   :caption: API Reference
+   :caption: API and Guides
    :hidden:
 
    api/api.rst
+   api/hammer.rst
