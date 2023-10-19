@@ -9,7 +9,7 @@ About
 The Hammer procedure animates the anticipation, hit, and recoil of a typical
 hammer motion, along with handling the transitions between them.
 
-TODO show gif of hammer.
+.. image:: ../images/GuideHammer.gif
 
 Usage
 -----
@@ -21,12 +21,17 @@ Define the AnimKey with the three movements.
 - ``recoil``: Does this after hitting. Additionally, oscillates between resting
   and this for a few iterations.
 
+For example, this code controls the rotation.
+
 .. code-block:: py
 
-   animkey = bmusic.Animkey(...)
-   animkey["hit"] = ...
-   animkey["prepare"] = ...
-   animkey["recoil"] = ...
+   from math import radians
+
+   anim = bmusic.Animator(obj, "rotation_euler", 0)
+   animkey = bmusic.Animkey([anim], [0])
+   animkey["prepare"] = [-radians(45)]
+   animkey["hit"] = [radians(30)]
+   animkey["recoil"] = [-radians(40)]
 
 ----
 
