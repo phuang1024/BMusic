@@ -23,8 +23,13 @@ However, there are a few things to note:
   - I usually set "Volume Min/Max" both to 1 in the properties to avoid this, as
     it's quite annoying.
 
-  - I usually parent the speaker to the camera to avoid the doppler effect.
+  - I usually parent the speaker to the camera to avoid the doppler effect and
+    panning.
 
 - **Final audio**: If you render the animation to a video file, the audio will
   be included (along with the above mentioned effects). However, I usually
   process the final audio separately, and then combine them in a video editor.
+
+- **Playback sync**: Find this option in *Timeline > Playback > Sync*. The
+  default ("Play Every Frame") will lag if your computer is slow. I usually set
+  it to "Sync to Audio" to avoid this.
