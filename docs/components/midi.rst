@@ -1,3 +1,5 @@
+.. _midia:
+
 MIDI
 ====
 
@@ -30,7 +32,8 @@ Quickstart
        print(note)
 
    # Split midi into tracks that each contain only one unique note.
-   # Useful when each object in your scene only plays one note; for example, one hammer on a piano.
+   # Useful when each object in your scene only plays a specific note;
+   # for example, each piano hammer corresponding to one note.
    for track in midi.split_notes():
        print(f"This track has {len(track)} messages of the note {track[0].note}.")
 
