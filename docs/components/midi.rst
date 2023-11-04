@@ -1,15 +1,9 @@
-.. _midi:
-
 MIDI
 ====
 
-BMusic uses ``mido`` to parse MIDI files.
 
-BMusic implements two classes to represent MIDI data:
-
-- :class:`bmusic.MessageList` is a single track of messages.
-- :class:`bmusic.Message` is a single message containing absolute
-  frame start and end times.
+Quickstart
+----------
 
 .. code-block:: python
 
@@ -51,3 +45,23 @@ BMusic implements two classes to represent MIDI data:
    start = 10
    end = 20
    msg = bmusic.Message(note, velocity, start, end)
+
+
+About
+-----
+
+`MIDI <https://en.wikipedia.org/wiki/MIDI>`_ is a standard for representing
+music data.
+
+BMusic uses a subset of the information in a MIDI file:
+
+- When a message (instance of playing a note) starts and ends.
+- The velocity (volume) of the message.
+
+BMusic uses the ``mido`` Python library to parse MIDI files.
+
+BMusic implements two classes to represent MIDI data:
+
+- :class:`bmusic.MessageList` is a single track of messages.
+- :class:`bmusic.Message` is a single message containing absolute
+  frame start and end timestamps.
