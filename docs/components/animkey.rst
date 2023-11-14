@@ -3,35 +3,12 @@
 AnimKey
 =======
 
-The :class:`~bmusic.AnimKey`, inspired by Blender's shape keys, pairs names with
-their specific motions.
-
-For example, an ``on`` position may be setting a light's power to ``100``, or a
-``hit`` position may be setting a hammer's rotation to ``10``.
-
-AnimKeys allow us to write **generalized algorithms** while users are able to
-**customize** the exact motion.
-
-For example, a hammer algorithm may contain:
-
-.. code-block::
-
-   for each note:
-       anticipate(note)
-       hit(note)
-       recoil(note)
-
-What do ``anticipate``, ``hit``, and ``recoil`` do? The user can define these
-keys --- maybe they set the hammer's rotation --- and our algorithm blindly uses
-them.
-
-This means that our algorithm is generalized: Maybe we can reuse the hammer
-procedure for a piano key, a bouncing ball, etc. The user would define what
-constitutes each action.
+The :class:`~bmusic.AnimKey` allow us to write **generalized algorithms**, while
+users are able to **customize** the exact motion.
 
 
-Example
--------
+Quickstart
+----------
 
 .. code-block:: python
 
@@ -59,35 +36,69 @@ Example
    # Animate at frame=90 with "up" and "forward" * -1
    animkey.animate(90, up=1, foward=-1, type="JITTER")
 
-AnimKeys control multiple animators at once. In this case, we created animators
-for the cube's X and Z location.
 
-The AnimKey object has many *keys*, each of which is a sequence of numbers, one
-for each animator. For example, a key of ``[10, 20]`` means that the first
-animator will animate to ``10``, and the second animator will animate to ``20``.
+About
+-----
 
-When initializing the AnimKey, we always provide the ``basis`` key which can be
-thought of as the resting or default position. In this case, the basis is
-``[0, 0]``, where the X and Z are both 0.
+Inspired by Blender's shape keys, AnimKeys perform the following functions:
 
-Next, we can define more keys. Here, the ``up`` key sets Z to ``1``, and
-``forward`` sets X to ``1``.
+- Controls multiple :class:`~bmusic.Animator` at once.
+- Matches *keys* (human-readable and user-defined strings) to *values* for each
+  animator.
 
-Last, we can call the ``animate`` method. The first argument is the frame. Other
-keyword arguments are the strengths of each key. We can combine keys, and
-strengths are not limited to ``(0, 1)``. The parameters ``type`` and ``handle``
-are also available.
+Much like the animators, you can use the AnimKey to insert a single keyframe for
+each animator at some frame, with the same control over handle and type.
 
-.. note::
 
-    Keys are converted to diffs internally. That is, the AnimKey stores the
-    difference between the key and the basis. In this case, because the basis is
-    ``[0, 0]``, the key is unchanged. Because the keys are diffs, we can interpret
-    them to mean *offsets* from the basis. For example, the ``up`` key means that
-    the Z location will be increased by ``1``. In practice you don't need to worry
-    about this. Just remember to provide **absolute** (not relative) values to the
-    AnimKey, which will be converted automatically.
+Abstract example
+^^^^^^^^^^^^^^^^
 
-When calling ``animate`` with strengths, the AnimKey will start with the basis,
-and add the diffs of each key. The key values are linearlly interpolated between
-strength ``(0, 1)``.
+Let's say our system contains a hammer and a light. For each message, the hammer
+should strike an object, and the light will turn on.
+
+We have two :class:`~bmusic.Animator` objects: One for the hammer's rotation,
+and one for the light's power.
+
+We could define two keys in this situation: ``on`` would be when the message is
+playing (light is on and hammer is striking), and ``off`` is the opposite.
+
+So the AnimKey would, abstractly, look like this:
+
+- Animators: ``Animator(hammer, rotation)``, ``Animator(light, power)``.
+- ``on``: ``[45degrees, 100]`` (maps to hammer and light, respectively).
+- ``off``: ``[0degrees, 0]``. In practice, this should be defined as the basis
+  key (see below).
+
+
+Factors and basis
+^^^^^^^^^^^^^^^^^
+
+The ``basis`` key --- conceptually, the default position --- is always required.
+In the code, you provide it to the AnimKey constructor.
+
+In the above example, the basis would be equivalent to ``off``.
+
+In contrast to the animators where you provide the *value* to animate to, the
+AnimKey takes *factors* (weights) for each key.
+
+Then, after computing the final value for each animator based on the keys and
+their factors, the AnimKey will insert the keyframes.
+
+For example:
+
+- Calling the AnimKey with no explicit factors results in the basis key.
+- Setting a single key to 1 and the rest to 0 results in that key.
+
+TODO
+
+
+Using it
+--------
+
+Create the AnimKey:
+
+- Define your Animators.
+- Create the AnimKey.
+- Define 
+
+TODO

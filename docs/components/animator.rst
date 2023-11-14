@@ -3,6 +3,9 @@
 Animator
 ========
 
+The :class:`~bmusic.Animator` class is a **wrapper** around Blender's
+**animation API**.
+
 
 Quickstart
 ----------
@@ -111,8 +114,8 @@ see what's going on. For example, each keyframe corresponding to the hammer
 striking will be ``EXTREME``.
 
 
-BMusic API
-----------
+Using it
+--------
 
 An Animator controls a single fcurve of an object.
 
