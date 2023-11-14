@@ -15,7 +15,7 @@ This flowchart shows the relationship between the main components of BMusic.
 - :ref:`procedure`:
   An animation procedure for a specific purpose (e.g. a hammer motion).
   Uses AnimKey to insert keyframes.
-- :ref:`midia`:
+- :ref:`midi`:
   Music data from a MIDI file.
 - User customization:
   Parameters defined by the Procedure.

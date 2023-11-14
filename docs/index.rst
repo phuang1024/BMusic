@@ -14,10 +14,10 @@ BMusic
 
    components/main.rst
    components/midi.rst
-   components/affixes.rst
    components/animator.rst
    components/animkey.rst
    components/procedure.rst
+   components/affixes.rst
 
 .. toctree::
    :caption: Tutorials

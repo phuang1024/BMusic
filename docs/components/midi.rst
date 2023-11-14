@@ -1,4 +1,4 @@
-.. _midia:
+.. _midi:
 
 MIDI
 ====
