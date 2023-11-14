@@ -12,6 +12,7 @@ BMusic
    :caption: Components
    :hidden:
 
+   components/main.rst
    components/midi.rst
    components/affixes.rst
    components/animator.rst
