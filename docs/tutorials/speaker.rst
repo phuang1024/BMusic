@@ -3,7 +3,7 @@
 Blender Speakers
 ================
 
-.. image:: ../images/speaker.jpg
+.. image:: ./Speaker.jpg
 
 Blender has a speaker object, which is quite obscure to most. It can be useful
 for music animations, adding sound when you preview your animation.

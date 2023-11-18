@@ -88,7 +88,7 @@ should move in sync with the music.
 
 If applicable, increase the end frame so you can view the full animation.
 
-.. image:: ../images/TutorialOneNote.jpg
+.. image:: ./OneNoteEx.jpg
 
 
 Multiple notes

@@ -62,7 +62,7 @@ splitting point is clamped to be between the original messages.
 
 Consider these illustrations:
 
-.. image:: ../images/affix_overlap.jpg
+.. image:: ./AffixOverlap.jpg
 
 Imagine we have two messages, represented in black. In yellow is the prefix, and
 blue is the suffix.
@@ -82,7 +82,7 @@ where they overlap.
 At the more extreme end, x=9, they are so close that the top message (in black)
 falls inside the first message's suffix (the blue/red region).
 
-.. image:: ../images/affix_split.jpg
+.. image:: ./AffixSplit.jpg
 
 We solve this problem by calculating a split point, in green. In this example,
 split=0.5, meaning the split point is halfway between the overlap.
@@ -94,7 +94,7 @@ Notice how the split is clamped to be between the original messages, shown when
 it flattens as it touches the bottom message. This means that the bottom
 message's suffix completely disappears.
 
-.. image:: ../images/affix_final.jpg
+.. image:: ./AffixFinal.jpg
 
 Here, the final result is shown. When the messages don't overlap, they have
 their normal affixes. When they do overlap, the split line is used.
