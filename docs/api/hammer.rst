@@ -3,13 +3,15 @@ Hammer
 
 This guide shows how to use :class:`bmusic.proc.Hammer` in common situations.
 
+
 About
 -----
 
 The Hammer procedure animates the anticipation, hit, and recoil of a typical
 hammer motion, along with handling the transitions between them.
 
-.. image:: ../images/GuideHammer.gif
+.. image:: ./HammerEx.gif
+
 
 Usage
 -----

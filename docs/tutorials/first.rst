@@ -10,6 +10,7 @@ The first example uses a MIDI of a single note repeating.
 #. Download :download:`../assets/OneNote.mid` and
    :download:`../assets/OneNote.mp3` for the tutorial.
 
+
 Setup scene
 ^^^^^^^^^^^
 
@@ -28,6 +29,7 @@ Setup scene
 
 #. Go to the ``Scripting`` screen layout. Add a new script in the text editor.
 
+
 Code
 ^^^^
 
@@ -40,7 +42,7 @@ First, do the setup:
 
    obj = bpy.data.objects["Cube"]
 
-Next, load the MIDI file. See :ref:`midi` for more details.
+Next, load the MIDI file. See :ref:`midi-docs` for more details.
 
 Make sure to set the ``offset`` to the frame at which the speaker was added.
 
@@ -80,6 +82,7 @@ Finally, create the procedure, and run it.
    proc = bmusic.proc.IntensityOnOff(midi=midi, animkey=animkey)
    proc.animate()
 
+
 Results
 ^^^^^^^
 
@@ -105,6 +108,7 @@ adding the new script file.
 #. Download :download:`../assets/MultiNote.mid` and
    :download:`../assets/MultiNote.mp3`.
 
+
 Setup scene
 ^^^^^^^^^^^
 
@@ -117,6 +121,7 @@ Setup scene
 
    - Move the cubes so they are not overlapping. Move them **not** along the
      X-axis, as that will be animated.
+
 
 Code
 ^^^^

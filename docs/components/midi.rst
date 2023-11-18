@@ -1,4 +1,4 @@
-.. _midi:
+.. _midi-docs:
 
 MIDI
 ====

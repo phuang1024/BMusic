@@ -21,8 +21,17 @@ project = 'BMusic'
 copyright = '2022, Patrick Huang'
 author = 'Patrick Huang'
 
+
+import re
+root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+with open(os.path.join(root, "bmusic", "__init__.py"), "r") as fp:
+    data = fp.read()
+version_pat = re.compile(r"\d\.\d\.\d")
+results = version_pat.findall(data)
+version = results[0] if len(results) > 0 else "0.0.1"
+
 # The full version, including alpha/beta/rc tags
-release = '0.0.4'
+release = version
 
 
 # -- General configuration ---------------------------------------------------

@@ -9,7 +9,7 @@ Installation
 Overview
 --------
 
-BMusic is a **Python library**.
+BMusic is a **Python library**, not an add-on.
 
 The general workflow when using BMusic in a music animation is:
 
@@ -32,10 +32,10 @@ Python*.
 
 This flowchart shows how various components interact.
 
-- The system Python has it's own modules (which we will modify later). Scripts
-  that you run from Blender use this interpreter and those modules.
-- Blender comes with the ``bpy`` module, which is the single gateway between
-  Blender and Python.
+- Blender Python has it's own modules (which we will modify later). Scripts that
+  you run from Blender use this interpreter and those modules.
+- Blender comes with the ``bpy`` module, which is the gateway between Blender
+  and Python.
 - Your script imports applicable modules (usually ``bpy``) and, again, runs on
   the Blender Python.
 
@@ -44,12 +44,11 @@ Installing
 ----------
 
 If you have not already (most likely if you never touched scripting before),
-choose a new, dedicated folder for the new Blender Python libraries we will
-install.
+choose a new, dedicated folder for the Blender Python libraries we will install.
 
 - This is separate from the system Python's libraries.
 - Place it somewhere where you won't touch for a while; if you modify the path,
-  you also need to change it in Blender's settings (see below).
+  you also need to change it in Blender's preferences (see below).
 
 ----
 
@@ -65,7 +64,8 @@ Make the directories. Notice that we **make an additional directory** ``modules`
 .. image:: ./BPrefsFilePath.jpg
 
 In Blender, go to "Preferences" > "File Paths" > "Scripts" and set the path to
-the directory chosen (in this example, ``/path/to/blender_scripts``).
+the directory chosen (in this example, ``/path/to/blender_scripts``). Notice how
+we omit the subdirectory ``modules`` here.
 
 ----
 
@@ -92,8 +92,8 @@ Troubleshooting
 ---------------
 
 There is a known issue with numpy, possibly because Blender Python has numpy
-built in. If you run into this error, try installing BMusic and dependencies
-*except* numpy.
+already built in. If you run into this error, try installing BMusic and
+dependencies *except* numpy.
 
 These instructions reflect the required dependencies as of ``v0.1.0``.
 
@@ -103,6 +103,8 @@ First, **remove all files** in the ``modules`` directory so you can start over.
 
    rm -rf /path/to/blender_scripts/modules/*
 
+   # Install BMusic with no dependencies.
    pip install --target="/path/to/blender_scripts/modules" bmusic --no-deps
+   # Install dependencies manually, except numpy.
    pip install --target="/path/to/blender_scripts/modules" mido tqdm
 
