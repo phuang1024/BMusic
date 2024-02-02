@@ -18,13 +18,14 @@ class AffixMessage(Message):
     """
     Prefix and suffix extension.
 
-    ``prefix`` and ``suffix`` are lengths in frames.
-    Based on application, suffix is either time after **start**
-    or **end**.
+    Based on application, suffix is either time after ``start`` or ``end``.
+    This is set by ``suffix_after_end`` in :func:`compute_affixes`.
     """
 
     prefix: float
+    """Length of prefix in frames."""
     suffix: float
+    """Length of suffix in frames."""
 
     def __repr__(self) -> str:
         return f"AffixMessage(msg={super().__repr__()}, prefix={self.prefix}, suffix={self.suffix})"
