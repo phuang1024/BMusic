@@ -150,6 +150,9 @@ class Procedure(metaclass=ProcMetaCls):
     """
     Procedure base class.
 
+    This base class does not have features specific to music animation;
+    consider using :class:`MusicProc` instead.
+
     A procedure animates objects, with input parameters from the user.
     Procedures are generalized: For example, a hammer procedure can be applied
     to a drum mallet, a piano key, etc.

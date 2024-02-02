@@ -110,6 +110,8 @@ class Message:
 class MessageList:
     """
     Sequence of messages sorted by start time.
+
+    A frozen class; that is, cannot be modified after creation.
     """
 
     def __init__(self, messages: Optional[Sequence[Message]] = None):
