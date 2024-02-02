@@ -127,8 +127,8 @@ To create the Animator, first define:
 - Optionally, the fcurve *index*. For example, ``0`` for X, ``1`` for Y, ``2``
   for Z.
 
-    - For scalar (non-vector) properties (e.g. ``pass_index``), simply omit the
-      index.
+  - For scalar (non-vector) properties (e.g. ``pass_index``), simply omit the
+    index.
 
 Then, create the Animator:
 

@@ -1,8 +1,14 @@
 Affixes
 =======
 
-BMusic has utilities to compute *affixes* for each message in a track, described
-below.
+Affixes define two additional numbers for each message in a track: The *prefix*
+(time before) and *suffix* (time after).
+
+BMusic computes the available time while avoiding overlaps between nearby
+messages.
+
+Affixes are used in almost every procedure: In a hammer, for example, the
+affixes define how much time is available to anticipate and recoil.
 
 
 What are affixes?
@@ -42,18 +48,20 @@ The :func:`bmusic.compute_affixes` function takes in a few notable parameters:
 The main complexity is in dealing with overlaps. Different applications may
 require different ways of choosing which affix to shorten.
 
-For example:
-
-For a hammer, it would be ideal to shorten the two equally: If we have a short
-period of time between two messages, the hammer should both recoil and
-anticipate quickly.
-
-For a glow-fade (where the prefix is quickly getting to the peak brightness, and
-the long suffix is fading away), we want to only shorten the suffix: If there is
-overlap, we want to keep the full prefix (which is relatively short) of lighting
-up, while cutting the suffix a bit short.
-
 This is set by the ``split`` parameter.
+
+.. info::
+
+    For example:
+
+    For a hammer, it would be ideal to shorten the two equally: If we have a short
+    period of time between two messages, the hammer should both recoil and
+    anticipate quickly.
+
+    For a glow-fade (where the prefix is quickly getting to the peak brightness, and
+    the long suffix is fading away), we want to only shorten the suffix: If there is
+    overlap, we want to keep the full prefix (which is relatively short) of lighting
+    up, while cutting the suffix a bit short.
 
 For a given overlap, the new splitting point is computed using ``split``. The
 splitting point is clamped to be between the original messages.

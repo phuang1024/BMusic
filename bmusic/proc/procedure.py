@@ -25,7 +25,9 @@ class ProcMetaCls(type):
     In your class's docstring:
 
     1. Write a parameters section at the end; this is denoted with the text ``Parameters:``.
+       See an existing class for an example.
     2. For each parameter, document it.
+       Again, see an existing example.
 
     Example (put this at the end of docstring):
 
@@ -219,6 +221,8 @@ class ForEachProc(MusicProc):
     """
     Base class meant for animating the same thing on each message.
     e.g. for each message, do hammer; light up; etc.
+
+    Intensity of message is interpolated from velocity, using given bounds.
 
     Parameters:
 
