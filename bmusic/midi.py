@@ -112,6 +112,8 @@ class MessageList:
     Sequence of messages sorted by start time.
 
     A frozen class; that is, cannot be modified after creation.
+
+    TODO this shouldn't be frozen. It should be possible to add and remove messages.
     """
 
     def __init__(self, messages: Optional[Sequence[Message]] = None):
