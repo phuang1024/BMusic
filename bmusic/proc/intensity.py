@@ -122,7 +122,8 @@ class IntensityFade(Intensity):
         keep fading until next play, even if the note was released.
     """
 
-    fade_func: Callable[[float], float] = lambda t: EXPONENTIAL(0.6, t)
+    # WORKAROUND: lambda takes `_` argument which is `self`, which it doesn't need.
+    fade_func: Callable[[float], float] = lambda _, t: EXPONENTIAL(0.6, t)
     start_time: float = 0.05
     key_interval: float = 0.3
     off_thres: float = 0.001

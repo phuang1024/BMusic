@@ -39,7 +39,8 @@ class Scheduling(Procedure):
     """
 
     animkeys: list[AnimKey]
-    dist_f: Callable[[int, int], float] = lambda i, j: abs(i-j)
+    # WORKAROUND: lambda takes `_` argument which is `self`, which it doesn't need.
+    dist_f: Callable[[int, int], float] = lambda _, i, j: abs(i-j)
     idle_time: float = 0.1
     depth: int = 3
 
