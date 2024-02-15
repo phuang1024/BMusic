@@ -31,6 +31,7 @@ BMusic
 
    api/api.rst
    api/hammer.rst
+   api/scheduling.rst
 
 
 .. image:: ./assets/example.jpg
