@@ -4,16 +4,18 @@ __all__ = (
     "OSCILLATE",
 )
 
-import numpy as np
+"""
+Common, builtin interpolation functions.
+"""
 
-from .midi import *
+import numpy as np
 
 
 def EXPONENTIAL(fac, t) -> float:
     """
     Exponential decay with factor ``fac`` (in units per second).
     """
-    return np.exp(-fac * t)
+    return np.exp(-1 * t / fac)
 
 def LINEAR(fac, t) -> float:
     """

@@ -53,8 +53,12 @@ class Scheduling(MusicProc):
         Time (sec) of pause when playing a message before available to move to next message.
     """
 
+    @staticmethod
+    def _default_cost_func(i, j):
+        return abs(i - j)
+
     animkeys: list[AnimKey]
-    cost_func: Callable[["Scheduling", int, int], float] = _default_cost_func
+    cost_func: Callable[[int, int], float] = _default_cost_func
     idle_time: float = 0.1
 
     def compute_cost(self, msg1: Message, msg2: Message) -> float:

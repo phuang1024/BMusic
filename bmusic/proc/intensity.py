@@ -16,8 +16,8 @@ import bpy
 from ..affix import *
 from ..anim import *
 from ..midi import *
-from ..utils import *
 from .procedure import ForEachProc
+from .. import utils
 
 
 class Intensity(ForEachProc):
@@ -122,7 +122,11 @@ class IntensityFade(Intensity):
         keep fading until next play, even if the note was released.
     """
 
-    fade_func: Callable[[float], float] = lambda t: EXPONENTIAL(0.6, t)
+    @staticmethod
+    def _default_fade_func(t):
+        return utils.EXPONENTIAL(1.5, t)
+
+    fade_func: Callable[[float], float] = _default_fade_func
     start_time: float = 0.05
     key_interval: float = 0.3
     off_thres: float = 0.001

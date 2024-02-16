@@ -95,7 +95,7 @@ There is a known issue with numpy, possibly because Blender Python has numpy
 already built in. If you run into this error, try installing BMusic and
 dependencies *except* numpy.
 
-These instructions reflect the required dependencies as of ``v0.1.0``.
+These instructions reflect the required dependencies as of ``v0.1.1``.
 
 First, **remove all files** in the ``modules`` directory so you can start over.
 
