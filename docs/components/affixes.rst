@@ -50,7 +50,7 @@ require different ways of choosing which affix to shorten.
 
 This is set by the ``split`` parameter.
 
-.. info::
+.. note::
 
     For example:
 

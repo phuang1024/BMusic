@@ -1,2 +1,2 @@
-fake-bpy-module-latest
+fake-bpy-module-4.0
 furo
