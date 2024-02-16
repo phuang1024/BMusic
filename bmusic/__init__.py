@@ -4,4 +4,4 @@ from .affix import *
 from .anim import *
 from .midi import *
 from . import proc
-from .utils import *
+from . import utils
