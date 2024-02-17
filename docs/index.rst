@@ -30,6 +30,7 @@ BMusic
    :hidden:
 
    api/api.rst
+   api/intensity.rst
    api/hammer.rst
    api/scheduling.rst
 
