@@ -34,7 +34,7 @@ BMusic
    api/scheduling.rst
 
 
-.. image:: ./assets/example.jpg
+.. image:: ./example.jpg
 
 Music animations combine music, 3D art, and computer generated animation.
 

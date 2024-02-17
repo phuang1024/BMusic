@@ -7,8 +7,8 @@ One note
 
 The first example uses a MIDI of a single note repeating.
 
-#. Download :download:`../assets/OneNote.mid` and
-   :download:`../assets/OneNote.mp3` for the tutorial.
+#. Download :download:`./OneNote.mid` and
+   :download:`./OneNote.mp3` for the tutorial.
 
 
 Setup scene
@@ -93,6 +93,8 @@ If applicable, increase the end frame so you can view the full animation.
 
 .. image:: ./OneNoteEx.jpg
 
+Download the final blend here: :download:`./OneNote.blend`
+
 
 Multiple notes
 --------------
@@ -105,8 +107,8 @@ specific note.
 Use your best judgment to follow certain steps from the previous example, e.g.
 adding the new script file.
 
-#. Download :download:`../assets/MultiNote.mid` and
-   :download:`../assets/MultiNote.mp3`.
+#. Download :download:`./MultiNote.mid` and
+   :download:`./MultiNote.mp3`.
 
 
 Setup scene
