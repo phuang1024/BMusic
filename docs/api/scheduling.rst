@@ -1,6 +1,37 @@
 Scheduling
 ==========
 
+The :class:`bmusic.proc.Scheduling` procedures assign messages to a limited
+number of agents.
+
+
+Usage
+-----
+
+.. code-block:: python
+
+   animkeys = []
+   for i in range(num_agents):
+       # One AnimKey per agent.
+       animkey = bmusic.AnimKey(...)
+       # Each key is move to position to play the note.
+       for note in range(88):
+           animkey[f"note{note}"] = ...
+
+   scheduling = bmusic.proc.Scheduling(
+       midi=midi,
+       animkeys=animkeys,
+   )
+   # This line animates the agents to move to the notes,
+   # and also returns which notes each agent plays.
+   schedule = scheduling.animate()
+
+   for i, midi in schedule:
+       ...
+       # e.g. now combine Hammer on top of Scheduling
+       proc = bmusic.proc.Hammer(midi=midi, ...)
+       proc.animate()
+
 
 Algorithm
 ---------
