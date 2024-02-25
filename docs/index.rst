@@ -26,13 +26,20 @@ BMusic
    tutorials/first.rst
 
 .. toctree::
-   :caption: API and Guides
+   :caption: Guides
    :hidden:
 
-   api/api.rst
-   api/intensity.rst
-   api/hammer.rst
-   api/scheduling.rst
+   guides/intensity.rst
+   guides/hammer.rst
+   guides/scheduling.rst
+
+.. toctree::
+   :caption: API
+   :hidden:
+
+   api/components.rst
+   api/proc_base.rst
+   api/proc_builtin.rst
 
 
 .. image:: ./example.jpg
@@ -42,4 +49,4 @@ Music animations combine music, 3D art, and computer generated animation.
 BMusic is a Python library providing tools for procedural (program generated)
 music animation.
 
-`See an example here <https://www.youtube.com/watch?v=ZE92NEA41nw>`_.
+Example: https://www.youtube.com/watch?v=ZE92NEA41nw
