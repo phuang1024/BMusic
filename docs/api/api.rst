@@ -60,3 +60,8 @@ API
 .. autoclass:: bmusic.proc.Scheduling
    :members:
    :show-inheritance:
+
+
+.. autoclass:: bmusic.proc.ToNote
+   :members:
+   :show-inheritance:
