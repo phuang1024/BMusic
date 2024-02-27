@@ -52,6 +52,10 @@ class Scheduling(MusicProc):
 
     idle_time
         Time (sec) of pause when playing a message before available to move to next message.
+
+    stay_to_end
+        If true, hold an agent to a message until it ends.
+        Else, agent can move as soon as it plays (i.e. when ``idle_time`` elapses).
     """
 
     @staticmethod
@@ -61,6 +65,7 @@ class Scheduling(MusicProc):
     animkeys: list[AnimKey]
     cost_func: Callable[[int, int], float] = _default_cost_func
     idle_time: float = 0.1
+    stay_to_end: bool = False
 
     def compute_cost(self, msg1: Message, msg2: Message) -> float:
         """
@@ -94,11 +99,11 @@ class Scheduling(MusicProc):
         assert len(schedule) == len(self.animkeys)
         for i in range(len(self.animkeys)):
             animkey = self.animkeys[i]
-            msgs = compute_affixes(schedule[i], max_prefix=idle_time/2, max_suffix=idle_time/2)
+            msgs = compute_affixes(schedule[i], max_prefix=idle_time/2, max_suffix=idle_time/2, suffix_after_end=self.stay_to_end)
             for msg in msgs:
                 kwargs = {f"note{msg.note}": 1}
-                animkey.animate(msg.start-msg.prefix, **kwargs)
-                animkey.animate(msg.start+msg.suffix, **kwargs)
+                animkey.animate(msg.start - msg.prefix, **kwargs)
+                animkey.animate((msg.end if self.stay_to_end else msg.start) + msg.suffix, **kwargs)
 
         return schedule
 
