@@ -112,6 +112,8 @@ class MessageList:
     Sequence of messages sorted by start time.
 
     A frozen class; that is, cannot be modified after creation.
+
+    TODO this shouldn't be frozen. It should be possible to add and remove messages.
     """
 
     def __init__(self, messages: Optional[Sequence[Message]] = None):
@@ -211,9 +213,11 @@ def parse_midi(path: str, offset: float = 0, fps: Optional[float] = None) -> Mes
 
 def split_chords(midi: MessageList, threshold: float) -> list[list[Message]]:
     """
-    Split a MIDI track into chords --- messages that play roughly at the same time.
+    Split a MIDI track into chords --- messages that play at the same time (or within a threshold of each other).
+
     Messages less than threshold apart will be combined into one chord.
-    Threshold units are whatever midi units are. Most likely frames.
+
+    Threshold units are whatever given MessageList units are; most likely frames.
     """
     chords = []
 
@@ -227,5 +231,9 @@ def split_chords(midi: MessageList, threshold: float) -> list[list[Message]]:
         else:
             chords.append(chord)
             chord = [msg]
+        last_time = msg.start
+
+    if chord:
+        chords.append(chord)
 
     return chords
