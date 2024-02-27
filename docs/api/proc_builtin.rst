@@ -23,6 +23,14 @@ Builtin procedures
    :members:
    :show-inheritance:
 
+.. autoclass:: bmusic.proc.GreedyScheduling
+   :members:
+   :show-inheritance:
+
+.. autoclass:: bmusic.proc.ChordScheduling
+   :members:
+   :show-inheritance:
+
 
 .. autoclass:: bmusic.proc.ToNote
    :members:
